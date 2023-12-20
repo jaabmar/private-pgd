@@ -59,7 +59,7 @@ def cdp_delta(rho, eps):
     # inherently get large delta in this regime.
     amin = 1.01  # don't let alpha be too small, due to numerical stability
     amax = (eps + 1) / (2 * rho) + 2
-    for i in range(1000):  # should be enough iterations
+    for _ in range(1000):  # should be enough iterations
         alpha = (amin + amax) / 2
         derivative = (
             (2 * alpha - 1) * rho - eps + math.log1p(-1.0 / alpha)

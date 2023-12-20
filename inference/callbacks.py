@@ -1,12 +1,13 @@
 import time
-from typing import Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 
-from inference.pgm.inference import FactoredInference
-from inference.privpgd.inference import AdvancedSlicedInference
-from inference.torch_factor import Factor
+if TYPE_CHECKING:
+    from inference.pgm.inference import FactoredInference
+    from inference.privpgd.inference import AdvancedSlicedInference
+    from inference.torch_factor import Factor
 
 
 class CallBack:

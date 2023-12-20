@@ -1,11 +1,12 @@
 import itertools
 from collections import OrderedDict
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple, Union
 
 import networkx as nx
 import numpy as np
 
-from inference.domain import Domain
+if TYPE_CHECKING:
+    from inference.domain import Domain
 
 
 class JunctionTree:

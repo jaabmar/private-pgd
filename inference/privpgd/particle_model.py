@@ -1,5 +1,5 @@
 import pickle
-from typing import List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 import pandas as pd
 import torch
@@ -7,7 +7,9 @@ import torch
 from inference.dataset import Dataset
 from inference.domain import Domain
 from inference.embedding import Embedding
-from inference.factor import Factor
+
+if TYPE_CHECKING:
+    from inference.factor import Factor
 
 
 class ParticleModel:
@@ -156,7 +158,7 @@ class ParticleModel:
 
     def synthetic_data(
         self, rows: Optional[int] = None, method: str = "round"
-    ) -> Dataset:
+    ) -> "Dataset":
         """
         Generates synthetic tabular data from the particle model.
 

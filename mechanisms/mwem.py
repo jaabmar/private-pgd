@@ -1,16 +1,18 @@
 import itertools
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from mechanism import Mechanism
 from scipy import sparse
 from scipy.special import softmax
 
-from inference.dataset import Dataset
 from inference.pgm.graphical_model import GraphicalModel
 from inference.pgm.inference import FactoredInference
-from inference.privpgd.inference import AdvancedSlicedInference
 from inference.privpgd.particle_model import ParticleModel
+from mechanisms.mechanism import Mechanism
+
+if TYPE_CHECKING:
+    from inference.dataset import Dataset
+    from inference.privpgd.inference import AdvancedSlicedInference
 
 
 class MWEM(Mechanism):

@@ -1,11 +1,13 @@
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import ot
 import pandas as pd
 
-from inference.dataset import Dataset
 from inference.embedding import Embedding
+
+if TYPE_CHECKING:
+    from inference.dataset import Dataset
 
 
 class Evaluator:
@@ -85,6 +87,7 @@ class Evaluator:
         res.update(eval_w)
         if use_wandb:
             import wandb
+
             wandb.log(res)
         if print_output:
             print(f"the evaluation shows: {res}")

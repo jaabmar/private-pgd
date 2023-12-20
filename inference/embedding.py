@@ -1,11 +1,13 @@
 from itertools import product
-from typing import Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import torch
 
-from inference.domain import Domain
+if TYPE_CHECKING:
+    from inference.domain import Domain
+
 from inference.torch_factor import Factor
 
 

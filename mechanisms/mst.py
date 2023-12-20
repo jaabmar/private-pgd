@@ -1,17 +1,28 @@
 import itertools
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import networkx as nx
 import numpy as np
-from cdp2adp import cdp_rho
 from disjoint_set import DisjointSet
 from scipy import sparse
 from scipy.special import logsumexp
 
 from inference.dataset import Dataset
 from inference.domain import Domain
-from inference.pgm.inference import FactoredInference
-from inference.privpgd.inference import AdvancedSlicedInference
+from mechanisms.cdp2adp import cdp_rho
+
+if TYPE_CHECKING:
+    from inference.pgm.inference import FactoredInference
+    from inference.privpgd.inference import AdvancedSlicedInference
 
 
 class MST:

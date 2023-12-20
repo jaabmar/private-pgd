@@ -2,9 +2,10 @@ import math
 from functools import partial
 
 import numpy as np
-from cdp2adp import cdp_rho
-from privacy_calibrator import ana_gaussian_mech
 from scipy.special import softmax
+
+from mechanisms.cdp2adp import cdp_rho
+from mechanisms.privacy_calibrator import ana_gaussian_mech
 
 
 def pareto_efficient(costs):
@@ -33,7 +34,7 @@ class Mechanism:
         epsilon: float,
         delta: float,
         bounded: bool = False,
-        prng: np.RandomState = np.random,
+        prng: np.random = np.random,
     ):
         """
         Base class for a mechanism.
@@ -42,7 +43,7 @@ class Mechanism:
             epsilon (float): Privacy parameter.
             delta (float): Privacy parameter.
             bounded (bool): Privacy definition (bounded vs unbounded DP).
-            prng (np.RandomState): Pseudo-random number generator.
+            prng (np.random): Pseudo-random number generator.
         """
         self.epsilon = epsilon
         self.delta = delta
@@ -79,13 +80,9 @@ class Mechanism:
         if isinstance(qualities, dict):
             keys = list(qualities.keys())
             qualities = np.array([qualities[key] for key in keys])
-            sensitivities = np.array(
-                [sensitivities[key] for key in keys]
-            )
+            sensitivities = np.array([sensitivities[key] for key in keys])
             if base_measure is not None:
-                base_measure = np.log(
-                    [base_measure[key] for key in keys]
-                )
+                base_measure = np.log([base_measure[key] for key in keys])
         else:
             keys = np.arange(qualities.size)
         scores = generalized_em_scores(qualities, sensitivities, t)
@@ -119,9 +116,7 @@ class Mechanism:
             keys = list(qualities.keys())
             qualities = np.array([qualities[key] for key in keys])
             if base_measure is not None:
-                base_measure = np.log(
-                    [base_measure[key] for key in keys]
-                )
+                base_measure = np.log([base_measure[key] for key in keys])
         else:
             qualities = np.array(qualities)
             keys = np.arange(qualities.size)
@@ -130,9 +125,7 @@ class Mechanism:
         if base_measure is None:
             p = softmax(0.5 * epsilon / sensitivity * q)
         else:
-            p = softmax(
-                0.5 * epsilon / sensitivity * q + base_measure
-            )
+            p = softmax(0.5 * epsilon / sensitivity * q + base_measure)
 
         return keys[self.prng.choice(p.size, p=p)]
 
@@ -150,12 +143,7 @@ class Mechanism:
         """
         if self.bounded:
             l2_sensitivity *= math.sqrt(2.0)
-        return (
-            l2_sensitivity
-            * ana_gaussian_mech(epsilon, delta)[
-                "sigma"
-            ]
-        )
+        return l2_sensitivity * ana_gaussian_mech(epsilon, delta)["sigma"]
 
     def laplace_noise_scale(self, l1_sensitivity, epsilon):
         """
@@ -214,9 +202,7 @@ class Mechanism:
             Function that samples from the appropriate noise distribution.
         """
         b = self.laplace_noise_scale(l1_sensitivity, epsilon)
-        sigma = self.gaussian_noise_scale(
-            l2_sensitivity, epsilon, delta
-        )
+        sigma = self.gaussian_noise_scale(l2_sensitivity, epsilon, delta)
         if np.sqrt(2) * b < sigma:
             return partial(self.laplace_noise, b)
         return partial(self.gaussian_noise, sigma)

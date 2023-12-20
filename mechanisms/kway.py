@@ -1,16 +1,18 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from ektelo_matrix import Identity
-from mechanism import Mechanism
-from privacy_calibrator import gaussian_mech
-from utils_mechanisms import downward_closure
 
-from inference.dataset import Dataset
-from inference.pgm.graphical_model import GraphicalModel
-from inference.pgm.inference import FactoredInference
-from inference.privpgd.inference import AdvancedSlicedInference
-from inference.privpgd.particle_model import ParticleModel
+from mechanisms.ektelo_matrix import Identity
+from mechanisms.mechanism import Mechanism
+from mechanisms.privacy_calibrator import gaussian_mech
+from mechanisms.utils_mechanisms import downward_closure
+
+if TYPE_CHECKING:
+    from inference.dataset import Dataset
+    from inference.pgm.graphical_model import GraphicalModel
+    from inference.pgm.inference import FactoredInference
+    from inference.privpgd.inference import AdvancedSlicedInference
+    from inference.privpgd.particle_model import ParticleModel
 
 
 class KWay(Mechanism):

@@ -1,5 +1,5 @@
 import random
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -8,9 +8,11 @@ from torch import optim
 from torch.optim.lr_scheduler import StepLR
 
 from inference import callbacks
-from inference.domain import Domain
 from inference.embedding import Embedding
 from inference.privpgd.particle_model import ParticleModel
+
+if TYPE_CHECKING:
+    from inference.domain import Domain
 
 
 class AdvancedSlicedInference:

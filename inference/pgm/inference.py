@@ -1,17 +1,28 @@
 from collections import defaultdict
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 import torch
 from scipy import sparse
 from scipy.sparse.linalg import lsmr
 
-from inference import callbacks
+from inference.callbacks import Logger
 from inference.clique_vector import CliqueVector
-from inference.domain import Domain
 from inference.embedding import Embedding
 from inference.pgm.graphical_model import GraphicalModel
 from inference.torch_factor import Factor
+
+if TYPE_CHECKING:
+    from inference.domain import Domain
 
 
 class FactoredInference:
@@ -93,7 +104,7 @@ class FactoredInference:
         self._setup(measurements, total)
 
         if callback is None and self.log:
-            options["callback"] = callbacks.Logger(self)
+            options["callback"] = Logger(self)
         if self.hp["descent_type"] == "GD":
             loss = self.gradient_descent(measurements, total, **options)
         else:

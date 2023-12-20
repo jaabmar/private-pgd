@@ -1,40 +1,12 @@
-import itertools
 import os
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Tuple
 
-import numpy as np
 import wandb
 
 from inference.dataset import Dataset
 from inference.evaluation import Evaluator
-
-
-def generate_all_kway_workload(
-    data: "Dataset",
-    degree: int = 2,
-    num_marginals: Optional[int] = None,
-) -> List[tuple]:
-    """
-    Generate all k-way marginals workload.
-
-    Args:
-        data (Dataset): The dataset to generate workload for.
-        degree (int): The degree of combinations.
-        num_marginals (Optional[int]): Number of marginals to generate.
-
-    Returns:
-        List[tuple]: A list of attribute combinations.
-    """
-    workload = list(itertools.combinations(data.domain.attrs, degree))
-    if num_marginals is not None:
-        workload = [
-            workload[i]
-            for i in np.random.choice(
-                len(workload), num_marginals, replace=False
-            )
-        ]
-    return workload
+from mechanisms.utils_mechanisms import generate_all_kway_workload
 
 
 def get_run_name(params: Dict[str, str]) -> str:
@@ -79,7 +51,7 @@ def initialize_mechanism_and_inference(hp: Dict[str, Any]) -> Tuple[Any, Any]:
     """Initialize the mechanism and inference method."""
     mechanisms = {
         "KWay": ("mechanisms.kway", "KWay"),
-        "MWEM": ("mechanisms.mwem_pgm", "MWEM"),
+        "MWEM": ("mechanisms.mwem", "MWEM"),
         "MST": ("mechanisms.mst", "MST"),
     }
     inference_methods = {
@@ -131,7 +103,6 @@ def train(params: Dict[str, Any]) -> None:
     generation_engine = InferenceMethod(
         domain=data.domain,
         N=data.df.shape[0],
-        evaluator=evaluator,
         hp=dict(wandb.config),
     )
 

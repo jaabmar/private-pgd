@@ -284,7 +284,7 @@ class GraphicalModel:
 
     def synthetic_data(
         self, rows: Optional[int] = None, method: str = "round"
-    ) -> Dataset:
+    ) -> "Dataset":
         """
         Generates synthetic tabular data from the distribution.
 

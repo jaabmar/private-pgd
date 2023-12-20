@@ -1,4 +1,9 @@
 import itertools
+from typing import List, Optional
+
+import numpy as np
+
+from inference.dataset import Dataset
 
 
 def powerset(iterable):
@@ -14,3 +19,30 @@ def downward_closure(Ws):
     for proj in Ws:
         ans.update(powerset(proj))
     return list(sorted(ans, key=len))
+
+
+def generate_all_kway_workload(
+    data: "Dataset",
+    degree: int = 2,
+    num_marginals: Optional[int] = None,
+) -> List[tuple]:
+    """
+    Generate all k-way marginals workload.
+
+    Args:
+        data (Dataset): The dataset to generate workload for.
+        degree (int): The degree of combinations.
+        num_marginals (Optional[int]): Number of marginals to generate.
+
+    Returns:
+        List[tuple]: A list of attribute combinations.
+    """
+    workload = list(itertools.combinations(data.domain.attrs, degree))
+    if num_marginals is not None:
+        workload = [
+            workload[i]
+            for i in np.random.choice(
+                len(workload), num_marginals, replace=False
+            )
+        ]
+    return workload

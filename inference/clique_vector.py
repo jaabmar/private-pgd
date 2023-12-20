@@ -1,9 +1,11 @@
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List
 
 import numpy as np
 
-from inference.dataset import Dataset
-from inference.domain import Domain
+if TYPE_CHECKING:
+    from inference.dataset import Dataset
+    from inference.domain import Domain
+
 from inference.torch_factor import Factor
 
 

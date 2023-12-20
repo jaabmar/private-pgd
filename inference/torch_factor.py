@@ -1,9 +1,10 @@
-from typing import Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import numpy as np
 import torch
 
-from inference.domain import Domain
+if TYPE_CHECKING:
+    from inference.domain import Domain
 
 
 class Factor:
