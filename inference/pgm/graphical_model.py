@@ -289,8 +289,8 @@ class GraphicalModel:
         Generates synthetic tabular data from the distribution.
 
         Args:
-            rows (Optional[int]): The number of rows in the synthetic dataset. If None, uses the total count of the model.
-                                Defaults to None.
+            rows (Optional[int]): The number of rows in the synthetic dataset. If None, uses total.
+            Defaults to None.
             method (str): The method to generate data, either 'round' or 'sample'. Defaults to 'round'.
 
         Returns:

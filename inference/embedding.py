@@ -385,7 +385,9 @@ class Embedding:
 
         return counts
 
-    def adjust_for_mst(self, attrs: List[str]) -> Optional[torch.Tensor]:
+    def adjust_for_compression(
+        self, attrs: List[str]
+    ) -> Optional[torch.Tensor]:
         """
         Adjusts for MST (Minimum Spanning Tree) by considering the specified attributes.
 
@@ -419,5 +421,4 @@ class Embedding:
 
     def projection_manifold(self, X):
         X.clamp_(0, 1)
-
         return X
