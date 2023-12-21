@@ -33,7 +33,7 @@ class Mechanism:
         self,
         epsilon: float,
         delta: float,
-        bounded: bool = False,
+        bounded: bool = True,
         prng: np.random = np.random,
     ):
         """
