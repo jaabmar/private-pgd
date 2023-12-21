@@ -1,5 +1,5 @@
 import random
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -7,7 +7,6 @@ from scipy import sparse
 from torch import optim
 from torch.optim.lr_scheduler import StepLR
 
-from inference import callbacks
 from inference.embedding import Embedding
 from inference.privpgd.particle_model import ParticleModel
 
@@ -21,7 +20,6 @@ class AdvancedSlicedInference:
         domain: "Domain",
         N: int,
         hp: Dict[str, Any],
-        log: bool = False,
         embedding: Optional["Embedding"] = None,
         constraint_regularizer: Optional[Any] = None,
     ):
@@ -32,16 +30,14 @@ class AdvancedSlicedInference:
             domain (Domain): Domain of the dataset.
             N (int): Number of records in the dataset.
             hp (Dict[str, Any]): Hyperparameters.
-            log (bool, optional): Flag to enable logging. Defaults to False.
             embedding (Optional[Embedding], optional): Embedding object. Defaults to None.
             constraint_regularizer (Optional[Any], optional): Constraint regularizer. Defaults to None.
         """
         self.domain = domain
         self.N = N
-        self.log = log
         self.hp = hp
-        self.constraint_regularizer = constraint_regularizer
         self.embedding = embedding if embedding else Embedding(domain)
+        self.constraint_regularizer = constraint_regularizer
         self.device = hp["device"]
         self.iters = hp["iters"]
         self.yprobs = {}
@@ -54,39 +50,32 @@ class AdvancedSlicedInference:
             )
         )
         self.model = None
-        self.measurements = None
-        self.cliques = None
-        self.centers = None
-        self.center_mappings = None
-        self.adjust_for_mst = None
-        self.dimsX = None
-        self.processed_measurements = None
+        self.measurements = []
+        self.cliques = []
+        self.centers = {}
+        self.center_mappings = {}
+        self.adjust_for_compression = {}
+        self.dimsX = {}
+        self.processed_measurements = []
 
     def estimate(
         self,
         measurements: List[
             Tuple[sparse.spmatrix, np.ndarray, float, Tuple[str, ...]]
         ],
-        callback: Optional[Callable] = None,
-        options: Dict[str, Any] = {},
+        total: Optional[int] = None,
     ) -> "ParticleModel":
         """
         Estimate the particle model.
 
         Args:
             measurements (List[Tuple[sparse.spmatrix, np.ndarray, float, Tuple[str, ...]]]): Measurements for estimation.
-            callback (Optional[Callable], optional): Callback function. Defaults to None.
-            options (Dict[str, Any], optional): Additional options. Defaults to {}.
-
+            total (Optional[int]): Total number of records, if known. For compatibility
         Returns:
             ParticleModel: The estimated particle model.
         """
         measurements = self.fix_measurements(measurements)
-        options["callback"] = callback
         self._setup(measurements)
-
-        if callback is None and self.log:
-            options["callback"] = callbacks.Logger(self)
         self.particle_gradient_descent()
 
         return self.model
@@ -106,6 +95,13 @@ class AdvancedSlicedInference:
         Returns:
             List[Tuple[sparse.spmatrix, np.ndarray, float, Tuple[str, ...]]]: The standardized measurements.
         """
+        assert type(measurements) is list, (
+            "Measurements must be a list, given " + measurements
+        )
+        assert all(
+            len(m) == 4 for m in measurements
+        ), "Each measurement must be a 4-tuple (Q, y, noise,proj)"
+
         ans = []
         for Q, y, noise, proj in measurements:
             if type(proj) is list:
@@ -114,6 +110,12 @@ class AdvancedSlicedInference:
                 proj = (proj,)
             if Q is None:
                 Q = sparse.eye(self.domain.size(proj))
+            assert np.isscalar(
+                noise
+            ), "Noise must be a real value, given " + str(noise)
+            assert all(a in self.domain for a in proj), (
+                str(proj) + " not contained in domain"
+            )
             ans.append((Q, y, noise, proj))
         return ans
 
@@ -142,23 +144,38 @@ class AdvancedSlicedInference:
             self.centers,
             self.center_mappings,
         ) = self.embedding.get_centers_of_embedding(model_cliques)
-        self.adjust_for_mst = {
-            clique: self.embedding.adjust_for_mst(clique)
+        self.adjust_for_compression = {
+            clique: self.embedding.adjust_for_compression(clique)
             for clique in model_cliques
         }
         self.dimsX = self.embedding.get_dims(model_cliques)
         self.processed_measurements = []
 
+        self.projection_step(measurements)
+
+    def projection_step(
+        self,
+        measurements: List[
+            Tuple[sparse.spmatrix, np.ndarray, float, Tuple[str, ...]]
+        ],
+    ):
+        """
+        Projection step. This method transforms the finite signed measures into probability measures by minimizing sliced
+        1-Wasserstein distance.
+
+        Args:
+            measurements (List[Tuple[sparse.spmatrix, np.ndarray, float, Tuple[str, ...]]]): The measurements.
+        """
         for _, y, noise, proj in measurements:
             ynorm = y / self.N
-            if self.adjust_for_mst[proj] is not None:
-                ynorm = ynorm[self.adjust_for_mst[proj].cpu().numpy()]
+            if self.adjust_for_compression[proj] is not None:
+                ynorm = ynorm[self.adjust_for_compression[proj].cpu().numpy()]
             if proj in self.yprobs:
                 yprobnorm = self.yprobs[proj]
             else:
+                # Initialization: set negative weights to zero and normalize
                 y_new = np.maximum(ynorm, 0)
                 y_new /= y_new.sum()
-
                 yprobnorm = torch.tensor(
                     y_new, dtype=torch.float32, device=self.device
                 )
@@ -191,7 +208,7 @@ class AdvancedSlicedInference:
         gamma: float = 0.8,
     ) -> torch.Tensor:
         """
-        Optimizes the tensor 'u' using gradient descent to minimize the sliced Wasserstein distance to 'v'.
+        Optimizes the tensor 'u' using gradient descent to minimize the sliced 1-Wasserstein distance to 'v'.
 
         Args:
             initial_u (torch.Tensor): The initial tensor 'u'.
@@ -217,7 +234,7 @@ class AdvancedSlicedInference:
             optimizer.zero_grad()
 
             # Compute the sliced 1-Wasserstein distance
-            SW1 = self.sliced_wasserstein_distance_full(
+            SW1 = self.sliced_one_wasserstein_distance(
                 torch.softmax(params, dim=0),
                 v,
                 X,
@@ -230,7 +247,7 @@ class AdvancedSlicedInference:
 
         return torch.softmax(params, dim=0).detach()
 
-    def sliced_wasserstein_distance_full(
+    def sliced_one_wasserstein_distance(
         self,
         u: torch.Tensor,
         v: torch.Tensor,
@@ -238,7 +255,9 @@ class AdvancedSlicedInference:
         num_projections: int = 5,
     ) -> float:
         """
-        Computes the full sliced Wasserstein distance between two distributions 'u' and 'v'.
+        Computes the sliced 1-Wasserstein (SW1) distance between two distributions 'u' and 'v'.
+        We leverage closed-form of the 1-Wasserstein distance with Vallender's identity
+        and approximate the SW1 with random projections.
 
         Args:
             u (torch.Tensor): The first distribution.
@@ -262,16 +281,18 @@ class AdvancedSlicedInference:
         X_sorted, indices_X = torch.sort(X_proj, dim=0)
 
         # Sort projections and get the indices
-
         u_sorted = u[indices_X]
 
         v_sorted = v[indices_X]
 
         distances = torch.diff(X_sorted, dim=0)
 
+        # Compute W1 using Vallender's identity
         cu = torch.cumsum(u_sorted, dim=0)[:-1, :]
         cv = torch.cumsum(v_sorted, dim=0)[:-1, :]
         c_diff = cu - cv
+
+        # Average across random projections to compute the SW1
         W1 = torch.sum(torch.abs(c_diff) * distances, dim=0)
         return W1.mean()
 
@@ -279,13 +300,20 @@ class AdvancedSlicedInference:
         """
         Performs particle gradient descent to optimize the particle model.
         """
+
+        # Set up batching, optimizer and scheduler
         model = self.model
         hp = self.hp
         paramsX = model.X.requires_grad_(True)
-
         iters = self.iters
         lrX = hp["lr"]
-
+        # Convert dictionary keys to a list for batching
+        proj_keys = [proj for yprob, noise, proj in self.processed_measurements]
+        # Set batch_size based on hp['batch_size']
+        batch_size = (
+            len(proj_keys) if hp["batch_size"] == 0 else hp["batch_size"]
+        )
+        # If random masking, use sparse version of Adam
         if self.hp["p_mask"] > 0:
             optimizerX = torch.optim.SparseAdam([paramsX], lr=lrX)
         else:
@@ -296,44 +324,26 @@ class AdvancedSlicedInference:
             gamma=hp["scheduler_gamma"],
         )
 
-        yprobvals = {}
-        if self.hp["random_sampling_swd"] == 0:
-            new_measurements = {}
-            for yprob, noise, proj in self.processed_measurements:
-                new_measurements[proj] = self.repeat_rows(
-                    self.centers[proj], yprob, self.n_particles
-                )
-                yprobvals[proj] = yprob
+        # Quantization
+        new_measurements = self.deterministic_quantization()
 
-        else:
-            new_measurements = {}
-            for yprob, noise, proj in self.processed_measurements:
-                new_measurements[proj] = yprob
-
-        # Convert dictionary keys to a list for batching
-        proj_keys = [proj for yprob, noise, proj in self.processed_measurements]
-
-        # Set batch_size based on hp['batch_size']
-        batch_size = (
-            len(proj_keys) if hp["batch_size"] == 0 else hp["batch_size"]
-        )
-
+        # Optimization step, minimize SW2 between empirical and private distributions
         total_loss = 0
         losses = {}
         proj_indices = list(range(len(proj_keys)))
-
-        for _ in range(1, iters + 1):
+        for _ in range(1, iters + 1):  # Iterate epochs
             # Shuffle the keys for random batches
             random.shuffle(proj_indices)  # Shuffle the indices
 
             paramsX.grad = torch.zeros_like(paramsX).to(self.device)
 
-            for i in range(0, len(proj_keys), batch_size):
+            for i in range(0, len(proj_keys), batch_size):  # Iterate batches
                 batch_start = i
                 batch_end = min(i + batch_size, len(proj_keys))
                 batch_keys_indices = proj_indices[batch_start:batch_end]
                 batch_keys = [proj_keys[ind] for ind in batch_keys_indices]
 
+                # Loss and gradient for domain-specific constraints
                 if self.constraint_regularizer is not None:
                     new_paramsX = torch.tensor(paramsX.data).requires_grad_(
                         True
@@ -348,23 +358,16 @@ class AdvancedSlicedInference:
                 else:
                     grad_mat = torch.zeros_like(paramsX)
 
-                for proj in batch_keys:
-                    if self.hp["random_sampling_swd"] == 0:
-                        Yarr = new_measurements[proj]
-                    else:
-                        Yarr = self.random_sample_columns(
-                            self.centers[proj],
-                            new_measurements[proj],
-                            self.n_particles,
-                        )
-
+                # Loss and gradient for SW2
+                for proj in batch_keys:  # Iterate measurements
+                    Yarr = new_measurements[proj]
                     dimX = self.dimsX[proj]
                     X_selected = paramsX.detach()[:, dimX]
 
                     (
                         loss,
                         grad_X_batch,
-                    ) = self.sliced_wasserstein_2_squared_distance_and_gradient(
+                    ) = self.sliced_two_wasserstein_squared_distance_and_gradient(
                         X_selected,
                         Yarr,
                         n_projections=self.hp["num_projections"],
@@ -374,6 +377,7 @@ class AdvancedSlicedInference:
 
                     losses[proj] = loss
 
+                # Mask tensors
                 if self.hp["p_mask"] > 0:
                     paramsX.grad = self.mask_tensor(
                         grad_mat, self.hp["p_mask"]
@@ -392,55 +396,15 @@ class AdvancedSlicedInference:
                 np.array([tloss for key, tloss in losses.items()])
             )
 
-    def random_sample_columns(
-        self, matrix: torch.Tensor, weights: torch.Tensor, N: int
-    ) -> torch.Tensor:
-        """
-        Randomly samples columns from a matrix based on provided weights.
-
-        Args:
-            matrix (torch.Tensor): The matrix to sample from.
-            weights (torch.Tensor): The weights for each column.
-            N (int): The number of columns to sample.
-
-        Returns:
-            torch.Tensor: The sampled matrix.
-        """
-
-        # Ensure the weights sum up to 1
-        normalized_weights = weights / torch.sum(weights)
-
-        # Sample N columns based on their weights
-        indices = torch.multinomial(normalized_weights, N, replacement=True).to(
-            self.device
-        )
-        new_matrix = matrix[indices, :]
-
-        return new_matrix
-
-    def mask_tensor(self, Y: torch.Tensor, p: float) -> torch.Tensor:
-        """
-        Masks a given percentage of a tensor.
-
-        Args:
-            Y (torch.Tensor): The tensor to be masked.
-            p (float): Percentage of the tensor to mask.
-
-        Returns:
-            torch.Tensor: The masked tensor.
-        """
-        assert Y.is_cuda, "Input tensor should be on the GPU."
-
-        # Compute the number of elements to mask
-        num_to_mask = int(Y.numel() * p / 100)
-
-        # Choose random indices to mask without repetition. Ensure it's on the same device as Y (GPU).
-        mask_indices = torch.randperm(Y.numel(), device=Y.device)[:num_to_mask]
-
-        # Create a flat view of the tensor to easily index into it and mask the chosen indices
-        Y.view(-1)[mask_indices] = 0  # or set to another value
-
-        return Y
+    def deterministic_quantization(self):
+        yprobvals = {}
+        quantized_measurements = {}
+        for yprob, _, proj in self.processed_measurements:
+            quantized_measurements[proj] = self.repeat_rows(
+                self.centers[proj], yprob, self.n_particles
+            )
+            yprobvals[proj] = yprob
+        return quantized_measurements, yprobvals
 
     def repeat_rows(
         self, matrix: torch.Tensor, weights: torch.Tensor, N: int
@@ -469,28 +433,12 @@ class AdvancedSlicedInference:
 
         return new_matrix
 
-    def sample_random_directions(
-        self, d: int, num_directions: int = 100
-    ) -> torch.Tensor:
-        """
-        Samples random directions for projections.
-
-        Args:
-            d (int): The dimension of each direction vector.
-            num_directions (int, optional): Number of directions to sample. Defaults to 100.
-
-        Returns:
-            torch.Tensor: The matrix of sampled directions.
-        """
-        theta = torch.randn(num_directions, d).to(self.device)
-        norm = torch.norm(theta, dim=1, keepdim=True) + 1e-9
-        return theta / norm
-
-    def sliced_wasserstein_2_squared_distance_and_gradient(
+    def sliced_two_wasserstein_squared_distance_and_gradient(
         self, X: torch.Tensor, Y: torch.Tensor, n_projections: int = 100
     ) -> Tuple[float, torch.Tensor]:
         """
-        Computes the sliced Wasserstein 2 squared distance and its gradient.
+        Computes the sliced 2-Wasserstein squared distance and its gradient. First, efficiently computes
+        the W2 distance by running a sorting algorithm. Second, approximates the SW2 with random projections.
 
         Args:
             X (torch.Tensor): The first set of samples.
@@ -520,3 +468,44 @@ class AdvancedSlicedInference:
         for d in range(dim):
             grads_reconstructed[:, :, d].scatter_(0, indices_X, grads[:, :, d])
         return swd_ret.item(), grads_reconstructed.mean(1) * 100
+
+    def sample_random_directions(
+        self, d: int, num_directions: int = 100
+    ) -> torch.Tensor:
+        """
+        Samples random directions for projections.
+
+        Args:
+            d (int): The dimension of each direction vector.
+            num_directions (int, optional): Number of directions to sample. Defaults to 100.
+
+        Returns:
+            torch.Tensor: The matrix of sampled directions.
+        """
+        theta = torch.randn(num_directions, d).to(self.device)
+        norm = torch.norm(theta, dim=1, keepdim=True) + 1e-9
+        return theta / norm
+
+    def mask_tensor(self, Y: torch.Tensor, p: float) -> torch.Tensor:
+        """
+        Masks a given percentage of a tensor.
+
+        Args:
+            Y (torch.Tensor): The tensor to be masked.
+            p (float): Percentage of the tensor to mask.
+
+        Returns:
+            torch.Tensor: The masked tensor.
+        """
+        assert Y.is_cuda, "Input tensor should be on the GPU."
+
+        # Compute the number of elements to mask
+        num_to_mask = int(Y.numel() * p / 100)
+
+        # Choose random indices to mask without repetition. Ensure it's on the same device as Y (GPU).
+        mask_indices = torch.randperm(Y.numel(), device=Y.device)[:num_to_mask]
+
+        # Create a flat view of the tensor to easily index into it and mask the chosen indices
+        Y.view(-1)[mask_indices] = 0  # or set to another value
+
+        return Y
