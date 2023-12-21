@@ -1,0 +1,28 @@
+workload = generate_all_kway_workload(data=data, degree=2, num_marginals=3)
+
+hp = {
+    "epsilon": 1.0,
+    "inference_type": "pgm_euclid",
+    "iterspgm": 2,
+    "warm_start": False,
+    "device": "cpu",
+    "descent_type": "MD",
+    "lrpgm": 0.001,
+    "delta": 0.000001,
+    "degree": 2,
+    "n_particles": 10,
+    "wmwem_rounds": 2,
+    "max_model_size": 1000000000000000,
+    "data_init": None,
+}
+
+generation_engine = FactoredInference(
+    domain=data.domain, N=data.df.shape[0], hp=hp
+)
+
+base_path = "/Users/javierabad/Documents/GitHub/private-pgd/data/datasets/acs_employment_CA_2018_default_32"
+
+data = Dataset.load(
+    os.path.join(base_path, "data_disc.csv"),
+    os.path.join(base_path, "domain.json"),
+)

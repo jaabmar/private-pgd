@@ -68,7 +68,7 @@ def initialize_mechanism_and_inference(hp: Dict[str, Any]) -> Tuple[Any, Any]:
     Mechanism = getattr(
         __import__(mechanism_module, fromlist=[mechanism_class]),
         mechanism_class,
-    )(hp=hp)
+    )
     InferenceMethod = getattr(
         __import__(inference_module, fromlist=[inference_class]),
         inference_class,
@@ -99,16 +99,17 @@ def train(params: Dict[str, Any]) -> None:
         dict(wandb.config)
     )
 
-    evaluator = Evaluator(data=data, synth=data, workload=workload)
     generation_engine = InferenceMethod(
         domain=data.domain,
         N=data.df.shape[0],
         hp=dict(wandb.config),
     )
 
+    mechanism = Mechanism(hp=dict(wandb.config))  # here we define bounded
+
     start_time = time.time()
-    synth, loss = Mechanism.run(
-        data=data, workload=workload, engine=generation_engine
+    synth, loss = mechanism.run(
+        data=data, workload=workload, engine=generation_engine, records=1000
     )
     end_time = time.time()
 
@@ -118,6 +119,7 @@ def train(params: Dict[str, Any]) -> None:
         synth.df.to_csv(dict(wandb.config)["save"], index=False)
 
     print("Starting to evaluate...")
+    evaluator = Evaluator(data=data, synth=data, workload=workload)
     evaluator.set_compression()
     evaluator.update_synth(synth)
     evaluator.evaluate()

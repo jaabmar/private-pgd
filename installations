@@ -6,3 +6,6 @@ autodp
 pandas
 POT
 cvxpy
+scikit-learn
+openml
+folktables
