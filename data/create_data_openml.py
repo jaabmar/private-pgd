@@ -11,8 +11,8 @@ from sklearn.model_selection import train_test_split
 
 from data.data_handler import DataHandler
 
-base_path = "/cluster/work/yang/donhausk/privacy-ot/data"
-unprocessed_data = "/cluster/work/yang/donhausk/privacy-ot/up_data"
+base_path = "datasets"
+unprocessed_data = "up_datasets"
 
 
 def fetch_and_preprocess_data(
