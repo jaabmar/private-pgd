@@ -64,7 +64,7 @@ class AdvancedSlicedInference:
             Tuple[sparse.spmatrix, np.ndarray, float, Tuple[str, ...]]
         ],
         total: Optional[int] = None,
-    ) -> "ParticleModel":
+    ) -> Tuple["ParticleModel", float]:
         """
         Estimate the particle model.
 
@@ -72,13 +72,13 @@ class AdvancedSlicedInference:
             measurements (List[Tuple[sparse.spmatrix, np.ndarray, float, Tuple[str, ...]]]): Measurements for estimation.
             total (Optional[int]): Total number of records, if known. For compatibility
         Returns:
-            ParticleModel: The estimated particle model.
+            Tuple["ParticleModel", float]: The estimated particle model and the loss.
         """
         measurements = self.fix_measurements(measurements)
         self._setup(measurements)
-        self.particle_gradient_descent()
+        loss = self.particle_gradient_descent()
 
-        return self.model
+        return self.model, loss
 
     def fix_measurements(
         self,
@@ -296,9 +296,12 @@ class AdvancedSlicedInference:
         W1 = torch.sum(torch.abs(c_diff) * distances, dim=0)
         return W1.mean()
 
-    def particle_gradient_descent(self):
+    def particle_gradient_descent(self) -> float:
         """
         Performs particle gradient descent to optimize the particle model.
+
+        Returns:
+            float: The loss value after optimization.
         """
 
         # Set up batching, optimizer and scheduler
@@ -325,7 +328,7 @@ class AdvancedSlicedInference:
         )
 
         # Quantization
-        new_measurements = self.deterministic_quantization()
+        new_measurements, _ = self.deterministic_quantization()
 
         # Optimization step, minimize SW2 between empirical and private distributions
         total_loss = 0
@@ -396,7 +399,23 @@ class AdvancedSlicedInference:
                 np.array([tloss for key, tloss in losses.items()])
             )
 
-    def deterministic_quantization(self):
+            return total_loss
+
+    def deterministic_quantization(
+        self,
+    ) -> Tuple[
+        Dict[Tuple[str, ...], torch.Tensor], Dict[Tuple[str, ...], torch.Tensor]
+    ]:
+        """
+        This method applies deterministic quantization to the processed measurements by repeating rows
+        of the center matrices according to the assigned probabilities. This helps in generating a quantized
+        version of the measurements, which is essential for further processing in the inference mechanism.
+
+        Returns:
+            Tuple[Dict[Tuple[str, ...], torch.Tensor], Dict[Tuple[str, ...], torch.Tensor]]: tuple containing two dicts.
+            The first dictionary maps projections to their quantized measurements as tensors.
+            The second dictionary holds the probability values associated with each projection.
+        """
         yprobvals = {}
         quantized_measurements = {}
         for yprob, _, proj in self.processed_measurements:
@@ -497,12 +516,12 @@ class AdvancedSlicedInference:
         Returns:
             torch.Tensor: The masked tensor.
         """
-        assert Y.is_cuda, "Input tensor should be on the GPU."
+        # assert Y.is_cuda, "Input tensor should be on the GPU."
 
         # Compute the number of elements to mask
         num_to_mask = int(Y.numel() * p / 100)
 
-        # Choose random indices to mask without repetition. Ensure it's on the same device as Y (GPU).
+        # Choose random indices to mask without repetition.
         mask_indices = torch.randperm(Y.numel(), device=Y.device)[:num_to_mask]
 
         # Create a flat view of the tensor to easily index into it and mask the chosen indices

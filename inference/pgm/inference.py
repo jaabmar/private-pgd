@@ -50,9 +50,9 @@ class FactoredInference:
             self.metric = "L1"
         self.N = N
         self.hp = hp
-        self.iters = hp["iterspgm"]
+        self.iters = hp["iters"]
         self.warm_start = hp["warm_start"]
-        self.stepsize = self.hp["lrpgm"]
+        self.stepsize = self.hp["lr"]
         self.history = []
         self.elim_order = elim_order
 
@@ -334,10 +334,9 @@ class FactoredInference:
             mu = marginals[cl]
             gradient[cl] = self.Factor.zeros(mu.domain)
             for Q, y, noise, proj in self.groups[cl]:
-                Q = Q.to_dense()
                 c = 1.0 / noise
                 mu2 = mu.project(proj)
-                x = mu2.datavector()
+                x = mu2.torch_datavector()
                 diff = c * (Q @ x - y)
                 if metric == "L1":
                     loss += abs(diff).sum()

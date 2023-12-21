@@ -156,7 +156,7 @@ class ParticleModel:
         """
         return self.project(self.domain.attrs).datavector()
 
-    def synthetic_data(self) -> "Dataset":
+    def synthetic_data(self, records: int = 0) -> "Dataset":
         """
         Generates synthetic tabular data from the particle model.
 
