@@ -68,22 +68,22 @@ def initialize_mechanism_and_inference(hp: Dict[str, Any]) -> Tuple[Any, Any]:
 @click.command()
 @click.option(
     "--savedir",
-    default="data/datasets/acs_income_CA_2018_default_32/",
+    default="src/data/datasets/acs_income_CA_2018_default_32/",
     help="Directory to save the generated synthetic dataset.",
 )
 @click.option(
     "--train_dataset",
-    default="data/datasets/acs_income_CA_2018_default_32/data_disc.csv",
+    default="src/data/datasets/acs_income_CA_2018_default_32/data_disc.csv",
     help="File path for the training dataset (CSV format).",
 )
 @click.option(
     "--test_dataset",
-    default="data/datasets/acs_income_CA_2018_default_32/testdata_disc.csv",
+    default="src/data/datasets/acs_income_CA_2018_default_32/testdata_disc.csv",
     help="File path for the test dataset (CSV format).",
 )
 @click.option(
     "--domain",
-    default="data/datasets/acs_income_CA_2018_default_32/domain.json",
+    default="src/data/datasets/acs_income_CA_2018_default_32/domain.json",
     help="File path for the domain description (JSON format).",
 )
 @click.option(
