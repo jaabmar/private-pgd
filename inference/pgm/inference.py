@@ -57,7 +57,9 @@ class FactoredInference:
         self.elim_order = elim_order
 
         self.embedding = Embedding(domain, base_domain=None, supports=None)
-        self.device = self.hp["device"]
+        self.device = self.device = (
+            "cuda" if torch.cuda.is_available() else "cpu"
+        )
 
         self.Factor = Factor
         self.structural_zeros = CliqueVector({})
@@ -225,27 +227,27 @@ class FactoredInference:
             theta[clique].values.requires_grad = True
             params[clique] = theta[clique].values
 
-        if hp["optimizerpgm"] == "Adam":
+        if hp["optimizer_pgm"] == "Adam":
             optimizer = torch.optim.Adam(
                 [params[key] for key in params], lr=hp["lrpgm"]
             )
-        elif hp["optimizerpgm"] == "SGD":
+        elif hp["optimizer_pgm"] == "SGD":
             optimizer = torch.optim.SGD(
                 [params[key] for key in params], momentum=0.9, lr=hp["lrpgm"]
             )
-        elif hp["optimizerpgm"] == "RMSProp":
+        elif hp["optimizer_pgm"] == "RMSProp":
             optimizer = torch.optim.RMSprop(
                 [params[key] for key in params], lr=hp["lrpgm"]
             )
 
-        if hp["scheduler_step"] > 0:
+        if hp["scheduler_step"]:
             scheduler = torch.optim.lr_scheduler.StepLR(
                 optimizer,
-                step_size=hp["scheduler_step_pgm"],
-                gamma=hp["scheduler_gamma_pgm"],
+                step_size=hp["scheduler_step"],
+                gamma=hp["scheduler_gamma"],
             )
         else:
-            scheduler = None  # No scheduler if scheduler_step is zero
+            scheduler = None
 
         curr_loss = 0
         for _ in range(1, self.iters + 1):

@@ -65,8 +65,8 @@ class Evaluator:
         self,
         print_output: bool = False,
         name: str = "",
-        use_wandb: bool = False,
-    ) -> Dict[str, float]:
+        # use_wandb: bool = False,
+    ) -> Tuple[Dict[str, float], Dict[str, float]]:
         """
         Evaluates the synthetic data against the actual data using various metrics.
 
@@ -77,7 +77,7 @@ class Evaluator:
             use_wandb (bool): If True, logs the metrics to Weights & Biases.
 
         Returns:
-            Dict[str, float]: A dictionary of distances calculated using different metrics.
+            Tuple[Dict[str, float], Dict[str, float]]: A dictionary of distances calculated using different metrics.
         """
         res = {}
         res.update(self.evaluate_l1(name=name))
@@ -85,13 +85,13 @@ class Evaluator:
         eval_w, dists = self.evaluate_w(name=name)
 
         res.update(eval_w)
-        if use_wandb:
-            import wandb
+        # if use_wandb:
+        #     import wandb
 
-            wandb.log(res)
+        #     wandb.log(res)
         if print_output:
             print(f"the evaluation shows: {res}")
-        return dists
+        return res, dists
 
     def evaluate_l1(self, name: str = "") -> Dict[str, float]:
         """

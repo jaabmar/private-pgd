@@ -33,7 +33,7 @@ class MWEM(Mechanism):
             epsilon=hp["epsilon"], delta=hp["delta"], bounded=bounded, prng=prng
         )
         self.k = hp["degree"]
-        self.rounds = hp["wmwem_rounds"]
+        self.rounds = hp["rounds"]
         self.data_init = hp["data_init"]
         self.max_model_size = hp["max_model_size"]
         self.hp = hp

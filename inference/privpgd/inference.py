@@ -38,17 +38,11 @@ class AdvancedSlicedInference:
         self.hp = hp
         self.embedding = embedding if embedding else Embedding(domain)
         self.constraint_regularizer = constraint_regularizer
-        self.device = hp["device"]
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.iters = hp["iters"]
-        self.yprobs = {}
+        self.n_particles = self.hp["n_particles"]
 
-        self.n_particles = (
-            self.hp["n_particles"]
-            if self.hp["n_particles"] > 0
-            else min(
-                self.N * self.hp["n_times_particles"], self.hp["max_particles"]
-            )
-        )
+        self.yprobs = {}
         self.model = None
         self.measurements = []
         self.cliques = []
@@ -323,7 +317,7 @@ class AdvancedSlicedInference:
             optimizerX = torch.optim.Adam([paramsX], lr=lrX)
         schedulerX = torch.optim.lr_scheduler.StepLR(
             optimizerX,
-            step_size=hp["scheduler_step_size"],
+            step_size=hp["scheduler_step"],
             gamma=hp["scheduler_gamma"],
         )
 
