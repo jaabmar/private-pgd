@@ -159,8 +159,8 @@ class Logger(CallBack):
             self.setup()
 
         t = time.time() - self.start
-        l1_loss = self.engine._marginal_loss(marginals, metric="L1")[0]
-        l2_loss = self.engine._marginal_loss(marginals, metric="L2")[0]
+        l1_loss = self.engine.marginal_loss(marginals, metric="L1")[0]
+        l2_loss = self.engine.marginal_loss(marginals, metric="L2")[0]
         feasibility = self.primal_feasibility(marginals)
         row = [self.calls, t, l1_loss, l2_loss, feasibility]
         if self.true_answers is not None:

@@ -15,7 +15,6 @@ import torch
 from scipy import sparse
 from scipy.sparse.linalg import lsmr
 
-from inference.callbacks import Logger
 from inference.clique_vector import CliqueVector
 from inference.embedding import Embedding
 from inference.pgm.graphical_model import GraphicalModel
@@ -32,7 +31,6 @@ class FactoredInference:
         N: int,
         hp: Dict[str, Any],
         structural_zeros: Dict[str, List[Tuple]] = {},
-        log: bool = False,
         elim_order: Optional[List[str]] = None,
     ):
         """
@@ -43,26 +41,22 @@ class FactoredInference:
             N (int): Total number of records in the dataset.
             hp (Dict[str, Any]): Hyperparameters.
             structural_zeros (Dict[str, List[Tuple]]): An encoding of known zeros in the distribution.
-            log (bool): Flag to log iterations of optimization.
             elim_order (Optional[List[str]]): An elimination order for the JunctionTree algorithm.
         """
         self.domain = domain
-        self.N = N
-        self.log = log
-        self.hp = hp
-        self.elim_order = elim_order
-
         if hp["inference_type"] == "pgm_euclid":
             self.metric = "L2"
         else:
             self.metric = "L1"
-
+        self.N = N
+        self.hp = hp
         self.iters = hp["iterspgm"]
         self.warm_start = hp["warm_start"]
-
+        self.stepsize = self.hp["lrpgm"]
         self.history = []
+        self.elim_order = elim_order
+
         self.embedding = Embedding(domain, base_domain=None, supports=None)
-        self.reg = 0.01
         self.device = self.hp["device"]
 
         self.Factor = Factor
@@ -82,8 +76,6 @@ class FactoredInference:
             Tuple[np.ndarray, np.ndarray, float, Union[str, Tuple[str, ...]]]
         ],
         total: Optional[int] = None,
-        callback: Optional[Callable[[Any], None]] = None,
-        options: Dict[str, Any] = {},
     ) -> Tuple["GraphicalModel", float]:
         """
         Estimates a GraphicalModel from the given measurements.
@@ -92,23 +84,17 @@ class FactoredInference:
             measurements (List[Tuple[np.ndarray, np.ndarray, float, Union[str, Tuple[str, ...]]]]): Measurements for
             estimation.
             total (Optional[int]): Total number of records, if known.
-            callback (Optional[Callable[[Any], None]]): Function to call after each iteration of optimization.
-            options (Dict[str, Any]): Solver-specific options.
 
         Returns:
             Tuple[GraphicalModel, float]: The estimated GraphicalModel and the loss value.
         """
 
         measurements = self.fix_measurements(measurements)
-        options["callback"] = callback
         self._setup(measurements, total)
-
-        if callback is None and self.log:
-            options["callback"] = Logger(self)
         if self.hp["descent_type"] == "GD":
-            loss = self.gradient_descent(measurements, total, **options)
+            loss = self.gradient_descent()
         else:
-            loss = self.mirror_descent(measurements, total, **options)
+            loss = self.mirror_descent()
 
         return self.model, loss
 
@@ -164,7 +150,7 @@ class FactoredInference:
         )
         model.potentials = CliqueVector.zeros(self.domain, model.cliques)
         model.potentials.combine(self.structural_zeros)
-        if self.warm_start and hasattr(self, "model"):
+        if self.warm_start and self.model:
             model.potentials.combine(self.model.potentials)
         self.model = model
         # group the measurements into model cliques
@@ -176,9 +162,9 @@ class FactoredInference:
                 Q = torch.tensor(Q, dtype=torch.float32, device=self.device)
             elif sparse.issparse(Q):
                 Q = Q.tocoo()
-                idx = torch.LongTensor([Q.row, Q.col]).to(self.device)
+                idx = torch.LongTensor(np.array([Q.row, Q.col])).to(self.device)
                 vals = torch.FloatTensor(Q.data).to(self.device)
-                Q = torch.sparse.FloatTensor(idx, vals).to(self.device)
+                Q = torch.sparse_coo_tensor(idx, vals, device=self.device)
             y = torch.tensor(y, dtype=torch.float32, device=self.device)
             m = (Q, y, noise, proj)
             self.fixed_measurements.append(m)
@@ -265,7 +251,7 @@ class FactoredInference:
         for _ in range(1, self.iters + 1):
             with torch.no_grad():
                 mu = model.belief_propagation(theta)
-                curr_loss, dL = self._marginal_loss(mu, metric=self.metric)
+                curr_loss, dL = self.marginal_loss(mu, metric=self.metric)
 
             for clique in cliques:
                 params[clique].grad = dL[clique].values
@@ -279,44 +265,37 @@ class FactoredInference:
 
     def mirror_descent(
         self,
-        callback: Optional[Callable[[Any], None]] = None,
     ) -> float:
         """
         Performs the mirror descent algorithm to estimate the GraphicalModel.
-
-        Args:
-            callback (Optional[Callable[[Any], None]]): Function to call after each iteration of optimization.
-
         Returns:
             float: The loss value after optimization.
         """
 
         model = self.model
-        _, theta = model.cliques, model.potentials
+        theta = model.potentials
         mu = model.belief_propagation(theta)
-        ans = self._marginal_loss(mu)
+        ans = self.marginal_loss(mu)
         if ans[0] == 0:
             return ans[0]
-        stepsize = self.hp["lrpgm"]
 
-        if np.isscalar(stepsize):
-            alpha = float(stepsize)
+        nols = self.stepsize is not None
+        if np.isscalar(self.stepsize):
+            alpha = float(self.stepsize)
             stepsize = lambda t: alpha
-        if stepsize is None:
-            alpha = 1.0 / self.model.total**2
+        if self.stepsize is None:
+            alpha = 1.0 / model.total**2
             stepsize = lambda t: 2.0 * alpha
 
         for t in range(1, self.iters + 1):
-            if callback is not None:
-                callback(mu)
             omega, nu = theta, mu
             curr_loss, dL = ans
             alpha = stepsize(t)
             for _ in range(25):
                 theta = omega - alpha * dL
                 mu = model.belief_propagation(theta)
-                ans = self._marginal_loss(mu)
-                if curr_loss - ans[0] >= 0.5 * alpha * dL.dot(nu - mu):
+                ans = self.marginal_loss(mu)
+                if nols or curr_loss - ans[0] >= 0.5 * alpha * dL.dot(nu - mu):
                     break
                 alpha *= 0.5
 
@@ -326,58 +305,13 @@ class FactoredInference:
 
         return ans[0]
 
-    def _marginal_loss(
+    def marginal_loss(
         self,
         marginals: Dict[str, "Factor"],
         metric: Optional[Union[str, Callable]] = None,
     ) -> Tuple[float, "CliqueVector"]:
         """
         Computes the loss and gradient for given marginals.
-
-        Args:
-            marginals (Dict[str, Factor]): Dictionary of marginals.
-            metric (Optional[Union[str, Callable[[Dict[str, Factor]], Tuple[float, CliqueVector]]]]): Metric for
-            loss computation.
-
-        Returns:
-            Tuple[float, CliqueVector]: The loss value and the gradient.
-        """
-        if metric is None:
-            metric = self.metric
-
-        if callable(metric):
-            return metric(marginals)
-
-        loss = 0.0
-        gradient = {}
-
-        for cl in marginals:
-            mu = marginals[cl]
-            gradient[cl] = self.Factor.zeros(mu.domain)
-            for Q, y, noise, proj in self.groups[cl]:
-                c = 1.0 / noise
-                mu2 = mu.project(proj)
-                x = mu2.torch_datavector()
-                diff = c * (Q @ x - y)
-                if metric == "L1":
-                    loss += abs(diff).sum()
-                    sign = (
-                        diff.sign() if hasattr(diff, "sign") else np.sign(diff)
-                    )
-                    grad = c * (Q.T @ sign)
-                else:
-                    loss += 0.5 * (diff @ diff)
-                    grad = c * (Q.T @ diff)
-                gradient[cl] += self.Factor(mu2.domain, grad)
-        return float(loss), CliqueVector(gradient)
-
-    def _marginal_loss_md(
-        self,
-        marginals: Dict[str, "Factor"],
-        metric: Optional[Union[str, Callable]] = None,
-    ) -> Tuple[float, "CliqueVector"]:
-        """
-        Computes the loss and gradient for given marginals using mirror descent.
 
         Args:
             marginals (Dict[str, Factor]): Dictionary of marginals.
