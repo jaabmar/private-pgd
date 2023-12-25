@@ -8,26 +8,6 @@ from mechanisms.cdp2adp import cdp_rho
 from mechanisms.privacy_calibrator import ana_gaussian_mech
 
 
-def pareto_efficient(costs):
-    eff = np.ones(costs.shape[0], dtype=bool)
-    for i, c in enumerate(costs):
-        if eff[i]:
-            eff[eff] = np.any(
-                costs[eff] <= c, axis=1
-            )  # Keep any point with a lower cost
-    return np.nonzero(eff)[0]
-
-
-def generalized_em_scores(q, ds, t):
-    q = -q
-    idx = pareto_efficient(np.vstack([q, ds]).T)
-    r = q + t * ds
-    r = r[:, None] - r[idx][None, :]
-    z = ds[:, None] + ds[idx][None, :]
-    s = (r / z).max(axis=1)
-    return -s
-
-
 class Mechanism:
     def __init__(
         self,
@@ -49,69 +29,14 @@ class Mechanism:
         self.delta = delta
         self.rho = 0 if delta == 0 else cdp_rho(epsilon, delta)
         self.bounded = bounded
+        self.sensitivity = 2.0 if self.bounded else 1.0
+        self.marginal_sensitivity = np.sqrt(2) if self.bounded else 1.0
         self.prng = prng
 
     def run(self, data, workload, engine):
         pass
 
-    def generalized_exponential_mechanism(
-        self,
-        qualities,
-        sensitivities,
-        epsilon,
-        t=None,
-        base_measure=None,
-    ):
-        """
-        Generalized exponential mechanism for privacy-preserving selection.
-
-        Args:
-            qualities: Qualities of the elements.
-            sensitivities: Sensitivities of the qualities.
-            epsilon: Privacy parameter.
-            t: t parameter.
-            base_measure: Base measure.
-
-        Returns:
-            Selected key.
-        """
-        if t is None:
-            t = 2 * np.log(len(qualities) / 0.5) / epsilon
-        if isinstance(qualities, dict):
-            keys = list(qualities.keys())
-            qualities = np.array([qualities[key] for key in keys])
-            sensitivities = np.array([sensitivities[key] for key in keys])
-            if base_measure is not None:
-                base_measure = np.log([base_measure[key] for key in keys])
-        else:
-            keys = np.arange(qualities.size)
-        scores = generalized_em_scores(qualities, sensitivities, t)
-        key = self.exponential_mechanism(
-            scores, epsilon, 1.0, base_measure=base_measure
-        )
-        return keys[key]
-
-    def permute_and_flip(self, qualities, epsilon, sensitivity=1.0):
-        """
-        Sample a candidate from the permute-and-flip mechanism.
-
-        Args:
-            qualities: Qualities of the elements.
-            epsilon: Privacy parameter.
-            sensitivity: Sensitivity parameter.
-
-        Returns:
-            Selected index.
-        """
-        q = qualities - qualities.max()
-        p = np.exp(0.5 * epsilon / sensitivity * q)
-        for i in np.random.permutation(p.size):
-            if np.random.rand() <= p[i]:
-                return i
-
-    def exponential_mechanism(
-        self, qualities, epsilon, sensitivity=1.0, base_measure=None
-    ):
+    def exponential_mechanism(self, qualities, epsilon, base_measure=None):
         if isinstance(qualities, dict):
             keys = list(qualities.keys())
             qualities = np.array([qualities[key] for key in keys])
@@ -123,9 +48,9 @@ class Mechanism:
 
         q = qualities - qualities.max()
         if base_measure is None:
-            p = softmax(0.5 * epsilon / sensitivity * q)
+            p = softmax(0.5 * epsilon / self.sensitivity * q)
         else:
-            p = softmax(0.5 * epsilon / sensitivity * q + base_measure)
+            p = softmax(0.5 * epsilon / self.sensitivity * q + base_measure)
 
         return keys[self.prng.choice(p.size, p=p)]
 

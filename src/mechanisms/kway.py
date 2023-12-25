@@ -5,7 +5,6 @@ import numpy as np
 from mechanisms.ektelo_matrix import Identity
 from mechanisms.mechanism import Mechanism
 from mechanisms.privacy_calibrator import gaussian_mech
-from mechanisms.utils_mechanisms import downward_closure
 
 if TYPE_CHECKING:
     from inference.dataset import Dataset
@@ -53,9 +52,6 @@ class KWay(Mechanism):
         Returns:
             Tuple[Dataset, float]: The synthetic dataset and the associated loss.
         """
-        delta_f = 2 * len(workload)
-        b = delta_f / self.epsilon
-        marginal_sensitivity = np.sqrt(2) if self.bounded else 1.0
         sigma = gaussian_mech(self.epsilon, self.delta)["sigma"] * np.sqrt(
             len(workload)
         )
@@ -65,29 +61,11 @@ class KWay(Mechanism):
             Q = Identity(data.domain.size(cl))
             x = data.project(cl).datavector()
             y = x + np.random.normal(
-                loc=0, scale=marginal_sensitivity * sigma, size=x.size
+                loc=0, scale=self.marginal_sensitivity * sigma, size=x.size
             )
-            measurements.append((Q, y, b, cl))
+            measurements.append((Q, y, self.marginal_sensitivity * sigma, cl))
 
         est, loss = engine.estimate(measurements, total)
         print("Generating Data...")
         synth = est.synthetic_data(records)
         return synth, loss
-
-    def modify_workload(
-        self, workload: List[Tuple[str, ...]]
-    ) -> Dict[Tuple[str, ...], float]:
-        """
-        Modifies the workload for K-Way mechanism.
-
-        Args:
-            workload (List[Tuple[str, ...]]): A list of queries as tuples of attributes.
-
-        Returns:
-            Dict[Tuple[str, ...], float]: A dictionary with scores for each candidate in the workload.
-        """
-
-        def score(cl):
-            return sum(len(set(cl) & set(ax)) for ax in workload)
-
-        return {cl: score(cl) for cl in downward_closure(workload)}

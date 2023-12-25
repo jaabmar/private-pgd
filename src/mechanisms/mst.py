@@ -55,7 +55,6 @@ class MST(Mechanism):
         Args:
             data (Dataset): The original dataset.
             engine (Union[FactoredInference,AdvancedSlicedInference]): The inference engine used for estimation.
-            bounded (bool): Flag for bounded sensitivity. Defaults to True.
             records(Optional[int]): Number of samples of the generated dataset. Defaults to None, same as original dataset.
 
         Returns:
@@ -103,14 +102,17 @@ class MST(Mechanism):
             weights = np.ones(len(cliques))
         weights /= np.linalg.norm(weights)
         measurements = []
-        marginal_sensitivity = np.sqrt(2) if self.bounded else 1.0
         for proj, wgt in zip(cliques, weights):
             x = data.project(proj).datavector()
             y = x + np.random.normal(
-                loc=0, scale=sigma / wgt * marginal_sensitivity, size=x.size
+                loc=0,
+                scale=sigma / wgt * self.marginal_sensitivity,
+                size=x.size,
             )
             Q = sparse.eye(x.size)
-            measurements.append((Q, y, sigma / wgt, proj))
+            measurements.append(
+                (Q, y, sigma / wgt * self.marginal_sensitivity, proj)
+            )
         return measurements
 
     def select(
@@ -150,7 +152,6 @@ class MST(Mechanism):
             idx = self.exponential_mechanism(
                 qualities=wgts,
                 epsilon=epsilon,
-                sensitivity=2.0 if self.bounded else 1.0,
             )
             e = candidates[idx]
             T.add_edge(*e)

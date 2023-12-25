@@ -65,8 +65,8 @@ class MWEM(Mechanism):
             x = workload_answers[cl]
             xest = est.project(cl).datavector()
             errors = np.append(errors, np.abs(x - xest).sum() - bias)
-        sensitivity = 2.0 if self.bounded else 1.0
-        prob = softmax(0.5 * eps / sensitivity * (errors - errors.max()))
+
+        prob = softmax(0.5 * eps / self.sensitivity * (errors - errors.max()))
         key = np.random.choice(len(errors), p=prob)
         return workload[key]
 
@@ -91,14 +91,11 @@ class MWEM(Mechanism):
         Returns:
             Tuple[Dataset, float]: The synthetic dataset and the associated loss.
         """
-        # TODO: add option for laplacian noise
         rounds = min(len(workload), self.rounds)
         rho = self.rho
         rho_per_round = rho / rounds
         sigma = np.sqrt(0.5 / (alpha * rho_per_round))
         exp_eps = np.sqrt(8 * (1 - alpha) * rho_per_round)
-        marginal_sensitivity = np.sqrt(2) if self.bounded else 1.0
-
         domain = data.domain
         total = data.records if self.bounded else None
 
@@ -147,7 +144,7 @@ class MWEM(Mechanism):
             x = data.project(ax).datavector()
 
             y = x + np.random.normal(
-                loc=0, scale=marginal_sensitivity * sigma, size=n
+                loc=0, scale=self.marginal_sensitivity * sigma, size=n
             )
             Q = sparse.eye(n)
             measurements.append((Q, y, 1.0, ax))
