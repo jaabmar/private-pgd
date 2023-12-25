@@ -1,9 +1,10 @@
 import random
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
 from scipy import sparse
+from scipy.sparse.linalg import lsmr
 from torch import optim
 from torch.optim.lr_scheduler import StepLR
 
@@ -18,8 +19,7 @@ class AdvancedSlicedInference:
     def __init__(
         self,
         domain: "Domain",
-        N: int,
-        hp: Dict[str, Any],
+        hp: Dict[str, Any] = {},
         embedding: Optional["Embedding"] = None,
         constraint_regularizer: Optional[Any] = None,
     ):
@@ -34,13 +34,31 @@ class AdvancedSlicedInference:
             constraint_regularizer (Optional[Any], optional): Constraint regularizer. Defaults to None.
         """
         self.domain = domain
-        self.N = N
         self.hp = hp
         self.embedding = embedding if embedding else Embedding(domain)
         self.constraint_regularizer = constraint_regularizer
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.iters = hp["iters"]
-        self.n_particles = self.hp["n_particles"]
+        self.n_particles = (
+            self.hp["n_particles"] if "n_particles" in hp else 100000
+        )
+        self.data_init = hp["data_init"] if "data_init" in hp else None
+        self.iters = hp["iters"] if "iters" in hp else 1000
+        self.lr = hp["lr"] if "lr" in hp else 10
+        self.batch_size = hp["batch_size"] if "batch_size" in hp else 5
+        self.p_mask = hp["p_mask"] if "p_mask" in hp else 0.8
+        self.scale_reg = hp["scale_reg"] if "scale_reg" in hp else 0.0
+        self.num_projections = (
+            hp["num_projections"] if "num_projections" in hp else 10
+        )
+        self.scheduler_step = (
+            hp["scheduler_step"] if "scheduler_step" in hp else 50
+        )
+        self.scheduler_gamma = (
+            hp["scheduler_gamma"] if "scheduler_gamma" in hp else 0.75
+        )
+        self.eval_particles = (
+            hp["eval_particles"] if "eval_particles" in hp else False
+        )
 
         self.yprobs = {}
         self.model = None
@@ -51,6 +69,10 @@ class AdvancedSlicedInference:
         self.adjust_for_compression = {}
         self.dimsX = {}
         self.processed_measurements = []
+        self.quantized_measurements = []
+        self.total = None
+        self.history = []
+        self.history_particles = []
 
     def estimate(
         self,
@@ -69,7 +91,7 @@ class AdvancedSlicedInference:
             Tuple["ParticleModel", float]: The estimated particle model and the loss.
         """
         measurements = self.fix_measurements(measurements)
-        self._setup(measurements)
+        self._setup(measurements, total)
         loss = self.particle_gradient_descent()
 
         return self.model, loss
@@ -118,6 +140,7 @@ class AdvancedSlicedInference:
         measurements: List[
             Tuple[sparse.spmatrix, np.ndarray, float, Tuple[str, ...]]
         ],
+        total: Optional[int] = None,
     ):
         """
         Sets up the estimation process by initializing various components based on the given measurements.
@@ -125,14 +148,17 @@ class AdvancedSlicedInference:
 
         Args:
             measurements (List[Tuple[sparse.spmatrix, np.ndarray, float, Tuple[str, ...]]]): The measurements for setup.
+            total (Optional[int]): Total number of records, if known.
         """
+        total = self.set_total(total, measurements)
+        self.total = total
         model_cliques = self.cliques = [m[3] for m in measurements]
         self.measurements = measurements
         self.model = ParticleModel(
             self.domain,
             embedding=self.embedding,
             n_particles=self.n_particles,
-            data_init=self.hp["data_init"],
+            data_init=self.data_init,
         )
         (
             self.centers,
@@ -143,25 +169,71 @@ class AdvancedSlicedInference:
             for clique in model_cliques
         }
         self.dimsX = self.embedding.get_dims(model_cliques)
-        self.processed_measurements = []
 
-        self.projection_step(measurements)
+        self.processed_measurements = []
+        self.quantized_measurements = []
+        processed_measurements = self.projection_step(measurements)
+        quantized_measurements, _ = self.deterministic_quantization(
+            processed_measurements
+        )
+        self.processed_measurements = processed_measurements
+        self.quantized_measurements = quantized_measurements
+
+    def set_total(
+        self,
+        total: Optional[int],
+        measurements: List[
+            Tuple[np.ndarray, np.ndarray, float, Union[str, Tuple[str, ...]]]
+        ],
+    ) -> int:
+        """
+        Determines or validates the total number of records based on measurements.
+
+        Args:
+            total (Optional[int]): The provided total number of records.
+            measurements (List[Tuple[np.ndarray, np.ndarray, float, Union[str, Tuple[str, ...]]]]): Measurements to use
+            for determining the total.
+
+        Returns:
+            int: The determined or validated total number of records.
+        """
+        if total is None:
+            # find the minimum variance estimate of the total given the measurements
+            variances = np.array([])
+            estimates = np.array([])
+            for Q, y, noise, _ in measurements:
+                o = np.ones(Q.shape[1])
+                v = lsmr(Q.T, o, atol=0, btol=0)[0]
+                if np.allclose(Q.T.dot(v), o):
+                    variances = np.append(variances, noise**2 * np.dot(v, v))
+                    estimates = np.append(estimates, np.dot(v, y))
+            if estimates.size == 0:
+                total = 1
+            else:
+                variance = 1.0 / np.sum(1.0 / variances)
+                estimate = variance * np.sum(estimates / variances)
+                total = max(1, estimate)
+        return total
 
     def projection_step(
         self,
         measurements: List[
             Tuple[sparse.spmatrix, np.ndarray, float, Tuple[str, ...]]
         ],
-    ):
+    ) -> List[Tuple[torch.Tensor, float, Tuple[str, ...]]]:
         """
         Projection step. This method transforms the finite signed measures into probability measures by minimizing sliced
         1-Wasserstein distance.
 
         Args:
             measurements (List[Tuple[sparse.spmatrix, np.ndarray, float, Tuple[str, ...]]]): The measurements.
+
+        Returns:
+            List[Tuple[torch.Tensor, float, Tuple[str, ...]]]: preprocessed measurements
         """
+        measurements_processed = []
         for _, y, noise, proj in measurements:
-            ynorm = y / self.N
+            ynorm = y / self.total
             if self.adjust_for_compression[proj] is not None:
                 ynorm = ynorm[self.adjust_for_compression[proj].cpu().numpy()]
             if proj in self.yprobs:
@@ -188,7 +260,8 @@ class AdvancedSlicedInference:
                 )
                 self.yprobs[proj] = yprobnorm
             m = (yprobnorm, noise, proj)
-            self.processed_measurements.append(m)
+            measurements_processed.append(m)
+        return measurements_processed
 
     def optimize_u(
         self,
@@ -290,113 +363,9 @@ class AdvancedSlicedInference:
         W1 = torch.sum(torch.abs(c_diff) * distances, dim=0)
         return W1.mean()
 
-    def particle_gradient_descent(self) -> float:
-        """
-        Performs particle gradient descent to optimize the particle model.
-
-        Returns:
-            float: The loss value after optimization.
-        """
-
-        # Set up batching, optimizer and scheduler
-        model = self.model
-        hp = self.hp
-        paramsX = model.X.requires_grad_(True)
-        iters = self.iters
-        lrX = hp["lr"]
-        # Convert dictionary keys to a list for batching
-        proj_keys = [proj for yprob, noise, proj in self.processed_measurements]
-        # Set batch_size based on hp['batch_size']
-        batch_size = (
-            len(proj_keys) if hp["batch_size"] == 0 else hp["batch_size"]
-        )
-        # If random masking, use sparse version of Adam
-        if self.hp["p_mask"] > 0:
-            optimizerX = torch.optim.SparseAdam([paramsX], lr=lrX)
-        else:
-            optimizerX = torch.optim.Adam([paramsX], lr=lrX)
-        schedulerX = torch.optim.lr_scheduler.StepLR(
-            optimizerX,
-            step_size=hp["scheduler_step"],
-            gamma=hp["scheduler_gamma"],
-        )
-
-        # Quantization
-        new_measurements, _ = self.deterministic_quantization()
-
-        # Optimization step, minimize SW2 between empirical and private distributions
-        total_loss = 0
-        losses = {}
-        proj_indices = list(range(len(proj_keys)))
-        for _ in range(1, iters + 1):  # Iterate epochs
-            # Shuffle the keys for random batches
-            random.shuffle(proj_indices)  # Shuffle the indices
-
-            paramsX.grad = torch.zeros_like(paramsX).to(self.device)
-
-            for i in range(0, len(proj_keys), batch_size):  # Iterate batches
-                batch_start = i
-                batch_end = min(i + batch_size, len(proj_keys))
-                batch_keys_indices = proj_indices[batch_start:batch_end]
-                batch_keys = [proj_keys[ind] for ind in batch_keys_indices]
-
-                # Loss and gradient for domain-specific constraints
-                if self.constraint_regularizer is not None:
-                    new_paramsX = torch.tensor(paramsX.data).requires_grad_(
-                        True
-                    )
-                    (
-                        grad,
-                        _,
-                    ) = self.constraint_regularizer.get_gradient_and_loss(
-                        new_paramsX, hp
-                    )
-                    grad_mat = grad * (hp["scale_reg"] * 100)
-                else:
-                    grad_mat = torch.zeros_like(paramsX)
-
-                # Loss and gradient for SW2
-                for proj in batch_keys:  # Iterate measurements
-                    Yarr = new_measurements[proj]
-                    dimX = self.dimsX[proj]
-                    X_selected = paramsX.detach()[:, dimX]
-
-                    (
-                        loss,
-                        grad_X_batch,
-                    ) = self.sliced_two_wasserstein_squared_distance_and_gradient(
-                        X_selected,
-                        Yarr,
-                        n_projections=self.hp["num_projections"],
-                    )
-                    total_loss += loss
-                    grad_mat[:, dimX] += grad_X_batch.detach()
-
-                    losses[proj] = loss
-
-                # Mask tensors
-                if self.hp["p_mask"] > 0:
-                    paramsX.grad = self.mask_tensor(
-                        grad_mat, self.hp["p_mask"]
-                    ).to_sparse()
-
-                optimizerX.step()  # update parameters
-                projected_X = self.embedding.projection_manifold(
-                    paramsX.detach()
-                )
-                paramsX.data.copy_(projected_X)
-                self.model.X = paramsX.detach()
-
-            schedulerX.step()
-
-            total_loss = np.sum(
-                np.array([tloss for key, tloss in losses.items()])
-            )
-
-            return total_loss
-
     def deterministic_quantization(
         self,
+        measurements: List[Tuple[torch.Tensor, float, Tuple[str, ...]]],
     ) -> Tuple[
         Dict[Tuple[str, ...], torch.Tensor], Dict[Tuple[str, ...], torch.Tensor]
     ]:
@@ -411,13 +380,13 @@ class AdvancedSlicedInference:
             The second dictionary holds the probability values associated with each projection.
         """
         yprobvals = {}
-        quantized_measurements = {}
-        for yprob, _, proj in self.processed_measurements:
-            quantized_measurements[proj] = self.repeat_rows(
+        measurements_quantized = {}
+        for yprob, _, proj in measurements:
+            measurements_quantized[proj] = self.repeat_rows(
                 self.centers[proj], yprob, self.n_particles
             )
             yprobvals[proj] = yprob
-        return quantized_measurements, yprobvals
+        return measurements_quantized, yprobvals
 
     def repeat_rows(
         self, matrix: torch.Tensor, weights: torch.Tensor, N: int
@@ -445,6 +414,111 @@ class AdvancedSlicedInference:
             new_matrix = torch.cat([new_matrix, matrix[indices]], dim=0)
 
         return new_matrix
+
+    def particle_gradient_descent(self) -> float:
+        """
+        Performs particle gradient descent to optimize the particle model.
+
+        Returns:
+            float: The loss value after optimization.
+        """
+
+        # Set up batching, optimizer and scheduler
+        self.history_particles = []
+        model = self.model
+        paramsX = model.X.requires_grad_(True)
+        iters = self.iters
+        lrX = self.lr
+        # Convert dictionary keys to a list for batching
+        proj_keys = [proj for yprob, noise, proj in self.processed_measurements]
+        # Set batch_size based on hp['batch_size']
+        batch_size = len(proj_keys) if self.batch_size == 0 else self.batch_size
+        # If random masking, use sparse version of Adam
+        if self.p_mask > 0:
+            optimizerX = torch.optim.SparseAdam([paramsX], lr=lrX)
+        else:
+            optimizerX = torch.optim.Adam([paramsX], lr=lrX)
+        schedulerX = torch.optim.lr_scheduler.StepLR(
+            optimizerX,
+            step_size=self.scheduler_step,
+            gamma=self.scheduler_gamma,
+        )
+
+        # Optimization step, minimize SW2 between empirical and private marginal distributions
+        total_loss = 0
+        losses = {}
+        proj_indices = list(range(len(proj_keys)))
+        for _ in range(1, iters + 1):  # Iterate epochs
+            # Shuffle the keys for random batches
+            random.shuffle(proj_indices)  # Shuffle the indices
+            paramsX.grad = torch.zeros_like(paramsX).to(self.device)
+
+            for i in range(0, len(proj_keys), batch_size):  # Iterate batches
+                batch_start = i
+                batch_end = min(i + batch_size, len(proj_keys))
+                batch_keys_indices = proj_indices[batch_start:batch_end]
+                batch_keys = [proj_keys[ind] for ind in batch_keys_indices]
+
+                # Loss and gradient for domain-specific constraints
+                if self.constraint_regularizer is not None:
+                    new_paramsX = torch.tensor(paramsX.data).requires_grad_(
+                        True
+                    )
+                    (
+                        grad,
+                        _,
+                    ) = self.constraint_regularizer.get_gradient_and_loss(
+                        new_paramsX, self.hp
+                    )
+                    grad_mat = grad * (self.scale_reg * 100)
+                else:
+                    grad_mat = torch.zeros_like(paramsX)
+
+                # Loss and gradient for SW2
+                for proj in batch_keys:  # Iterate measurements
+                    Yarr = self.quantized_measurements[proj]
+                    dimX = self.dimsX[proj]
+                    X_selected = paramsX.detach()[:, dimX]
+
+                    (
+                        loss,
+                        grad_X_batch,
+                    ) = self.sliced_two_wasserstein_squared_distance_and_gradient(
+                        X_selected,
+                        Yarr,
+                        n_projections=self.num_projections,
+                    )
+                    total_loss += loss
+                    grad_mat[:, dimX] += grad_X_batch.detach()
+
+                    losses[proj] = loss
+
+                # Mask tensors
+                if self.p_mask > 0:
+                    paramsX.grad = self.mask_tensor(
+                        grad_mat, self.p_mask
+                    ).to_sparse()
+
+                optimizerX.step()  # update parameters
+                projected_X = self.embedding.projection_manifold(
+                    paramsX.detach()
+                )
+                paramsX.data.copy_(projected_X)
+                self.model.X = paramsX.detach()
+
+            schedulerX.step()
+
+            total_loss = np.sum(
+                np.array([tloss for key, tloss in losses.items()])
+            )
+
+            if self.eval_particles:
+                synth = self.model.synthetic_data()
+                self.history_particles.append(synth.df)
+
+            self.history.append(total_loss)
+
+        return np.sum(self.history)
 
     def sliced_two_wasserstein_squared_distance_and_gradient(
         self, X: torch.Tensor, Y: torch.Tensor, n_projections: int = 100

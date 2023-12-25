@@ -28,7 +28,6 @@ class FactoredInference:
     def __init__(
         self,
         domain: "Domain",
-        N: int,
         hp: Dict[str, Any],
         structural_zeros: Dict[str, List[Tuple]] = {},
         elim_order: Optional[List[str]] = None,
@@ -38,22 +37,16 @@ class FactoredInference:
 
         Args:
             domain (Domain): The domain information.
-            N (int): Total number of records in the dataset.
             hp (Dict[str, Any]): Hyperparameters.
             structural_zeros (Dict[str, List[Tuple]]): An encoding of known zeros in the distribution.
             elim_order (Optional[List[str]]): An elimination order for the JunctionTree algorithm.
         """
         self.domain = domain
-        if hp["inference_type"] == "pgm_euclid":
-            self.metric = "L2"
-        else:
-            self.metric = "L1"
-        self.N = N
+        self.metric = "L2"
         self.hp = hp
         self.iters = hp["iters"]
         self.warm_start = hp["warm_start"]
         self.stepsize = self.hp["lr"]
-        self.history = []
         self.elim_order = elim_order
 
         self.embedding = Embedding(domain, base_domain=None, supports=None)
@@ -93,11 +86,7 @@ class FactoredInference:
 
         measurements = self.fix_measurements(measurements)
         self._setup(measurements, total)
-        if self.hp["descent_type"] == "GD":
-            loss = self.gradient_descent()
-        else:
-            loss = self.mirror_descent()
-
+        loss = self.mirror_descent()
         return self.model, loss
 
     def fix_measurements(
@@ -133,7 +122,7 @@ class FactoredInference:
         measurements: List[
             Tuple[np.ndarray, np.ndarray, float, Union[str, Tuple[str, ...]]]
         ],
-        total: Optional[int],
+        total: Optional[int] = None,
     ) -> None:
         """
         Sets up the inference process based on the measurements.
@@ -210,60 +199,6 @@ class FactoredInference:
                 estimate = variance * np.sum(estimates / variances)
                 total = max(1, estimate)
         return total
-
-    def gradient_descent(self) -> float:
-        """
-        Performs gradient descent algorithm to estimate the GraphicalModel.
-
-        Returns:
-            float: The loss value after optimization.
-        """
-
-        hp = self.hp
-        model = self.model
-        cliques, theta = model.cliques, model.potentials
-        params = {}
-        for clique in cliques:
-            theta[clique].values.requires_grad = True
-            params[clique] = theta[clique].values
-
-        if hp["optimizer_pgm"] == "Adam":
-            optimizer = torch.optim.Adam(
-                [params[key] for key in params], lr=hp["lrpgm"]
-            )
-        elif hp["optimizer_pgm"] == "SGD":
-            optimizer = torch.optim.SGD(
-                [params[key] for key in params], momentum=0.9, lr=hp["lrpgm"]
-            )
-        elif hp["optimizer_pgm"] == "RMSProp":
-            optimizer = torch.optim.RMSprop(
-                [params[key] for key in params], lr=hp["lrpgm"]
-            )
-
-        if hp["scheduler_step"]:
-            scheduler = torch.optim.lr_scheduler.StepLR(
-                optimizer,
-                step_size=hp["scheduler_step"],
-                gamma=hp["scheduler_gamma"],
-            )
-        else:
-            scheduler = None
-
-        curr_loss = 0
-        for _ in range(1, self.iters + 1):
-            with torch.no_grad():
-                mu = model.belief_propagation(theta)
-                curr_loss, dL = self.marginal_loss(mu, metric=self.metric)
-
-            for clique in cliques:
-                params[clique].grad = dL[clique].values
-            optimizer.step()
-            if scheduler is not None:
-                scheduler.step()
-
-        model.potentials = theta
-        self.model = model
-        return curr_loss
 
     def mirror_descent(
         self,
