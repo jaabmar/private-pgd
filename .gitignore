@@ -49,8 +49,6 @@ Thumbs.db
 
 # Other
 *.tmp
-*.temp
-commands
 src/privpgd.egg-info/dependency_links.txt
 src/privpgd.egg-info/PKG-INFO
 src/privpgd.egg-info/requires.txt

@@ -9,7 +9,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 setup(
     name="privpgd",
     version="0.0.1",
-    description="Python implementation of the testing procedures introduced in the paper: Hidden yet quantifiable: Privacy-preserving data release leveraging optimal transport and particle gradient descent",
+    description="Python implementation of the testing procedures introduced in the paper: Privacy-preserving data release leveraging optimal transport and particle gradient descent",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/jaabmar/private-pgd",
@@ -36,7 +36,7 @@ setup(
         "openml==0.14.1",
         "POT==0.9.1",
         "folktables==0.0.12",
-        "click==8.1.7"
+        "seaborn==0.13.0",
     ],
     python_requires="==3.11.5",
 )
