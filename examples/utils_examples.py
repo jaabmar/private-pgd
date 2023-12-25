@@ -183,13 +183,16 @@ def animate_optimization_to_gif(
     total_frames = (
         len(particle_data) + pause_duration * fps
     )  # Total frames including pause
+    plt.subplots_adjust(top=0.90)
+    ax.legend(
+        loc="upper center", bbox_to_anchor=(0.5, 1.15), shadow=True, ncol=2
+    )
+
     ax.set_title("Optimization Process", fontweight="bold")
     ax.set_xlabel("X1", fontweight="bold")
     ax.set_ylabel("X2", fontweight="bold")
     ax.grid(True)
-    ax.legend(
-        loc="upper center", bbox_to_anchor=(0.5, -0.05), shadow=True, ncol=2
-    )
+
     iteration_text = ax.text(
         0.02, 0.95, "", transform=ax.transAxes, backgroundcolor="white"
     )
