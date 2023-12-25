@@ -114,13 +114,13 @@ def initialize_mechanism_and_inference(hp: Dict[str, Any]) -> Tuple[Any, Any]:
     "--max_model_size",
     default=1000,
     type=float,
-    help="Maximum allowable size of the model in MegaBytes.",
+    help="Maximum allowable size of the PGM model in MegaBytes.",
 )
 @click.option(
     "--iters",
     default=1000,
     type=int,
-    help="Number of iterations for PGM mirror descent or PrivPGD particle gradient descent.",
+    help="Number of iterations for PrivPGD particle gradient descent.",
 )
 @click.option(
     "--n_particles",
@@ -143,7 +143,7 @@ def initialize_mechanism_and_inference(hp: Dict[str, Any]) -> Tuple[Any, Any]:
     "--warm_start",
     default=True,
     type=bool,
-    help="Whether to use warm start in the algorithm.",
+    help="Whether to use warm start in PGM.",
 )
 @click.option(
     "--mechanism",
@@ -155,28 +155,16 @@ def initialize_mechanism_and_inference(hp: Dict[str, Any]) -> Tuple[Any, Any]:
     "--lr", default=10.0, type=float, help="Learning rate for PGM or PrivPGD."
 )
 @click.option(
-    "--descent_type",
-    default="MD",
-    type=click.Choice(["GD", "MD"]),
-    help="Descent algorithm for PGM, either Gradient Descent (GD) or Mirror Descent (MD).",
-)
-@click.option(
-    "--optimizer_pgm",
-    default="Adam",
-    type=click.Choice(["Adam", "SGD", "RMSProp"]),
-    help="Optimizer type for PGM.",
-)
-@click.option(
     "--scheduler_step",
     default=50,
     type=float,
-    help="Scheduler step size for PGM or PrivPGD.",
+    help="Scheduler step size for PrivPGD.",
 )
 @click.option(
     "--scheduler_gamma",
     default=0.75,
     type=float,
-    help="Scheduler gamma (i.e., multiplicative factor) for PGM or PrivPGD.",
+    help="Scheduler gamma (i.e., multiplicative factor) for PrivPGD.",
 )
 @click.option(
     "--num_projections",
@@ -231,8 +219,6 @@ def experiment(
     warm_start,
     mechanism,
     lr,
-    descent_type,
-    optimizer_pgm,
     scheduler_step,
     scheduler_gamma,
     num_projections,
