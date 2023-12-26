@@ -1,3 +1,4 @@
+
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -5,6 +6,18 @@ from matplotlib.animation import FuncAnimation
 
 from mechanisms.ektelo_matrix import Identity
 from mechanisms.privacy_calibrator import gaussian_mech
+
+
+def flatten_dict(d, parent_key="", sep="_"):
+    """Flatten a nested dictionary."""
+    items = []
+    for k, v in d.items():
+        new_key = f"{parent_key}{sep}{k}" if parent_key else k
+        if isinstance(v, dict):
+            items.extend(flatten_dict(v, new_key, sep=sep).items())
+        else:
+            items.append((new_key, v))
+    return dict(items)
 
 
 def measure_noisy_marginals(data, epsilon, delta, workload):

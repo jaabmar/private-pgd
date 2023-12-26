@@ -4,22 +4,11 @@ import time
 from typing import Any, Dict, Tuple
 
 import click
+from utils_examples import flatten_dict
 
 from inference.dataset import Dataset
 from inference.evaluation import Evaluator
 from mechanisms.utils_mechanisms import generate_all_kway_workload
-
-
-def flatten_dict(d, parent_key="", sep="_"):
-    """Flatten a nested dictionary."""
-    items = []
-    for k, v in d.items():
-        new_key = f"{parent_key}{sep}{k}" if parent_key else k
-        if isinstance(v, dict):
-            items.extend(flatten_dict(v, new_key, sep=sep).items())
-        else:
-            items.append((new_key, v))
-    return dict(items)
 
 
 def load_data_and_prepare_workload(hp: Dict[str, Any]) -> Tuple[Dataset, Any]:
@@ -62,28 +51,52 @@ def initialize_mechanism_and_inference(hp: Dict[str, Any]) -> Tuple[Any, Any]:
         __import__(inference_module, fromlist=[inference_class]),
         inference_class,
     )
+
+    # Create an instance of the mechanism with the appropriate parameters
+    if hp["mechanism"] == "KWay":
+        Mechanism = Mechanism(
+            epsilon=hp["epsilon"],
+            delta=hp["delta"],
+            degree=hp["degree"],
+            bounded=True,
+        )
+    elif hp["mechanism"] == "MWEM":
+        Mechanism = Mechanism(
+            epsilon=hp["epsilon"],
+            delta=hp["delta"],
+            rounds=hp["rounds"],
+            data_init=hp["data_init"],
+            max_model_size=hp["max_model_size"],
+            bounded=True,
+        )
+    else:  # MST
+        # For other mechanisms, modify as needed
+        Mechanism = Mechanism(
+            epsilon=hp["epsilon"], delta=hp["delta"], bounded=True
+        )
+
     return Mechanism, InferenceMethod
 
 
 @click.command()
 @click.option(
     "--savedir",
-    default="src/data/datasets/acs_income_CA_2018_default_32/",
+    default="../src/data/datasets/acs_income_CA_2018_default_32/",
     help="Directory to save the generated synthetic dataset.",
 )
 @click.option(
     "--train_dataset",
-    default="src/data/datasets/acs_income_CA_2018_default_32/data_disc.csv",
+    default="../src/data/datasets/acs_income_CA_2018_default_32/data_disc.csv",
     help="File path for the training dataset (CSV format).",
 )
 @click.option(
     "--test_dataset",
-    default="src/data/datasets/acs_income_CA_2018_default_32/testdata_disc.csv",
+    default="../src/data/datasets/acs_income_CA_2018_default_32/testdata_disc.csv",
     help="File path for the test dataset (CSV format).",
 )
 @click.option(
     "--domain",
-    default="src/data/datasets/acs_income_CA_2018_default_32/domain.json",
+    default="../src/data/datasets/acs_income_CA_2018_default_32/domain.json",
     help="File path for the domain description (JSON format).",
 )
 @click.option(
@@ -120,7 +133,7 @@ def initialize_mechanism_and_inference(hp: Dict[str, Any]) -> Tuple[Any, Any]:
     "--iters",
     default=1000,
     type=int,
-    help="Number of iterations for PrivPGD particle gradient descent.",
+    help="Number of iterations for PrivPGD particle gradient descent or PGM mirror descent.",
 )
 @click.option(
     "--n_particles",
@@ -236,15 +249,12 @@ def experiment(
     params = locals()
 
     data, workload = load_data_and_prepare_workload(params)
-    Mechanism, InferenceMethod = initialize_mechanism_and_inference(params)
+    mechanism, inference_method = initialize_mechanism_and_inference(params)
 
-    generation_engine = InferenceMethod(
+    generation_engine = inference_method(
         domain=data.domain,
-        N=data.df.shape[0],
         hp=params,
     )
-
-    mechanism = Mechanism(hp=params)  # here we define bounded
 
     start_time = time.time()
     synth, loss = mechanism.run(
@@ -285,8 +295,6 @@ def experiment(
 
     # File to save results
     results_file = os.path.join(savedir, "experiment_results.csv")
-
-    # Check if the file exists and whether a header is needed
     file_exists = os.path.isfile(results_file)
 
     with open(results_file, "a", newline="") as csvfile:
