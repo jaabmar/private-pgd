@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -15,7 +15,9 @@ if TYPE_CHECKING:
 class KWay(Mechanism):
     def __init__(
         self,
-        hp: Dict[str, Any],
+        epsilon: float,
+        delta: float = 0.00001,
+        degree: int = 2,
         bounded: bool = True,
         prng: np.random = np.random,
     ):
@@ -23,21 +25,22 @@ class KWay(Mechanism):
         Initializes the K-Way mechanism for differential privacy.
 
         Args:
-            hp (Dict[str, Any]): A dictionary of hyperparameters containing epsilon, delta, and degree.
-            prng (np.random): Pseudo Random Number Generator. Defaults to None.
-            bounded (bool): Privacy definition (bounded vs unbounded DP).
+            epsilon (float): Differential privacy parameter epsilon.
+            delta (float): Differential privacy parameter delta. Defaults to 0.00001.
+            degree (int): Degree of the K-Way mechanism. Defaults to 2.
+            bounded (bool): Indicates if the privacy definition is bounded or unbounded. Defaults to True.
+            prng (np.random): Pseudo Random Number Generator. Defaults to np.random.
         """
         super(KWay, self).__init__(
-            epsilon=hp["epsilon"], delta=hp["delta"], bounded=bounded, prng=prng
+            epsilon=epsilon, delta=delta, bounded=bounded, prng=prng
         )
-        self.k = hp["degree"]
-        self.hp = hp
+        self.k = degree
 
     def run(
         self,
         data: "Dataset",
-        workload: List[Tuple[str, ...]],
         engine: Union["FactoredInference", "AdvancedSlicedInference"],
+        workload: List[Tuple[str, ...]],
         records: Optional[int] = None,
     ) -> Tuple["Dataset", float]:
         """

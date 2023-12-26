@@ -33,7 +33,7 @@ class Mechanism:
         self.marginal_sensitivity = np.sqrt(2) if self.bounded else 1.0
         self.prng = prng
 
-    def run(self, data, workload, engine):
+    def run(self, data, engine, workload):
         pass
 
     def exponential_mechanism(self, qualities, epsilon, base_measure=None):

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from scipy import sparse
@@ -17,7 +17,11 @@ if TYPE_CHECKING:
 class MWEM(Mechanism):
     def __init__(
         self,
-        hp: Dict[str, Any],
+        epsilon: float,
+        delta: float = 0.00001,
+        rounds: int = 100,
+        data_init: Optional = None,
+        max_model_size: float = 1000,
         bounded: bool = True,
         prng: np.random = np.random,
     ):
@@ -25,18 +29,20 @@ class MWEM(Mechanism):
         Initializes the MWEM mechanism for differential privacy.
 
         Args:
-            prng (np.random): Pseudo Random Number Generator. Defaults to None.
-            hp (Dict[str, Any]): A dictionary of hyperparameters containing epsilon, delta, and degree.
-            bounded (bool): Privacy definition (bounded vs unbounded DP).
+            epsilon (float): Differential privacy parameter epsilon.
+            delta (float): Differential privacy parameter delta. Defaults to 0.00001.
+            rounds (int): The number of rounds for the mechanism. Defaults to 100.
+            data_init (Optional): Initial data or model. Defaults to None.
+            max_model_size (float): Maximum model size in MBytes. Defaults to 1000.
+            bounded (bool): Indicates if the privacy definition is bounded or unbounded. Defaults to True.
+            prng (np.random): Pseudo Random Number Generator. Defaults to np.random.
         """
         super(MWEM, self).__init__(
-            epsilon=hp["epsilon"], delta=hp["delta"], bounded=bounded, prng=prng
+            epsilon=epsilon, delta=delta, bounded=bounded, prng=prng
         )
-        self.k = hp["degree"]
-        self.rounds = hp["rounds"]
-        self.data_init = hp["data_init"]
-        self.max_model_size = hp["max_model_size"]
-        self.hp = hp
+        self.rounds = rounds
+        self.data_init = data_init
+        self.max_model_size = max_model_size
 
     def worst_approximated(
         self,
@@ -73,8 +79,8 @@ class MWEM(Mechanism):
     def run(
         self,
         data: "Dataset",
-        workload: List[Tuple[str, ...]],
         engine: Union["FactoredInference", "AdvancedSlicedInference"],
+        workload: List[Tuple[str, ...]],
         alpha: float = 0.9,
         records: Optional[int] = None,
     ) -> Tuple["Dataset", float]:

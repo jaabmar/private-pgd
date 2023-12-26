@@ -1,14 +1,5 @@
 import itertools
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Union
 
 import networkx as nx
 import numpy as np
@@ -27,26 +18,25 @@ if TYPE_CHECKING:
 class MST(Mechanism):
     def __init__(
         self,
-        hp: Dict[str, Any],
+        epsilon: float,
+        delta: float = 0.00001,
         bounded: bool = True,
     ):
         """
         Initializes the MST mechanism for differential privacy.
 
         Args:
-            hp (Dict[str, Any]): A dictionary of hyperparameters containing epsilon, delta, number of particles, etc.
-            bounded (bool): Privacy definition (bounded vs unbounded DP).
+            epsilon (float): Differential privacy parameter epsilon.
+            delta (float): Differential privacy parameter delta. Defaults to 0.00001.
+            bounded (bool): Indicates if the privacy definition is bounded or unbounded. Defaults to True.
         """
-        super(MST, self).__init__(
-            epsilon=hp["epsilon"], delta=hp["delta"], bounded=bounded
-        )
-        self.hp = hp
+        super(MST, self).__init__(epsilon=epsilon, delta=delta, bounded=bounded)
 
     def run(
         self,
         data: "Dataset",
-        workload: List[Tuple[str, ...]],
         engine: Union["FactoredInference", "AdvancedSlicedInference"],
+        workload: List[Tuple[str, ...]] = None,
         records: Optional[int] = None,
     ) -> Tuple["Dataset", float]:
         """
@@ -266,27 +256,3 @@ class MST(Mechanism):
             undo_compress_fn,
             supports,
         )
-
-
-# def exponential_mechanism_mst(
-#         self,
-#         q: np.ndarray,
-#         eps: float,
-#         sensitivity: float,
-#         prng: np.random = np.random,
-#     ) -> int:
-#         """
-#         Applies the exponential mechanism for differential privacy.
-
-#         Args:
-#             q (np.ndarray): The array of scores.
-#             eps (float): Epsilon value for differential privacy.
-#             sensitivity (float): Sensitivity of the query.
-#             prng (np.random): Pseudo Random Number Generator. Defaults to np.random.
-
-#         Returns:
-#             int: The selected index based on the exponential mechanism.
-#         """
-#         scores = 0.5 * eps / sensitivity * q
-#         probas = np.exp(scores - logsumexp(scores))
-#         return prng.choice(q.size, p=probas)
