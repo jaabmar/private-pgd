@@ -31,7 +31,7 @@ Key advantages of PrivPGD include:
 
 ## Contents
 
-The `src` folder contains the core code of the package, organized into several subfolders, each catering to specific functionalities:
+The `src` folder contains the core code of the package, organized into several subfolders, each catering to specific functionalities. The codebase is heavily inspired by the [repository of PGM](https://github.com/ryan112358/private-pgm), reflecting in the design and implementation of various components.
 
 ### 1. Mechanisms (`src/mechanisms`):
    - Handles marginal selection and privatization.
