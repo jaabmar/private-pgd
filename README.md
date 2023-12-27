@@ -11,7 +11,6 @@ This repository contains the Python implementation of **PrivPGD**, a generation 
 * [Overview](#overview)
 * [Contents](#contents)
 * [Getting Started](#getting-started)
-* [Usage](#usage)
 * [Examples and Tutorial](#examples-and-tutorial)
 * [Contributing](#contributing)
 * [Contact](#contact)
@@ -26,7 +25,7 @@ PrivPGD is a novel approach for differentially private tabular data synthesis. I
 Key advantages of PrivPGD include:
 
 - State-of-the-Art Performance: Demonstrates superior performance in benchmarks and downstream tasks, especially with large datasets.
-- Scalability: Features an optimized gradient computation suitable for parallelization on modern GPUs, making it suitable for handling large datasets and many marginals.
+- Scalability: Features an optimized gradient computation suitable for parallelization on modern GPUs, making it particularly fast at handling large datasets and many marginals.
 - Geometry Preservation: Retains the geometry of dataset features, suck as rankings, aligning more naturally with the nuances of real-world data.
 - Domain-Specific Constraints Incorporation: Enables the inclusion of additional constraints in the synthetic data generation process.
 
@@ -42,15 +41,15 @@ The `src` folder contains the core code of the package, organized into several s
      - `mst.py`: Implements the MST mechanism.
    - Additional utility files supporting these mechanisms are also located in this folder.
 
-### 2. Data Handling (`src/data`):
-   - Dedicated to downloading and processing data.
-   - Contains scripts and modules for data manipulation, preparation, and loading.
-
-### 3. Inference Methods (`src/inference`):
+### 2. Inference Methods (`src/inference`):
    - Contains the code for generation methods.
    - Subfolders and their specific methods:
      - `pgm`: Contains the implementation of the PGM method.
      - `privpgd`: Houses the PrivPGD method, our novel approach for differentially private data generation.
+
+### 3. Data Handling (`src/data`):
+   - Dedicated to downloading and processing data.
+   - Contains scripts and modules for data manipulation, preparation, and loading.
 
 ## Getting Started
 
@@ -100,23 +99,21 @@ There are two ways to install the package:
 
 ## Examples and Tutorial
 
-## Examples and Tutorial
-
 In the `examples` folder, you'll find practical examples showcasing how to use the package effectively. These examples are designed to help you understand the application of different mechanisms and methods included in the package.
 
 ### Key Experiment Scripts
 
 1. **`experiment.py`**: This is a general file for running experiments. It's a versatile script that can be used for various experiment configurations.
 
-2. **`mst+pgm.py`**: Use this script to run experiments with the PGM generation method, utilizing MST for marginal selection.
+2. **`mst+pgm.py`**: Use this script to run experiments with the PGM generation method, using MST for marginal selection.
 
-3. **`privpgd.py`**: This script is dedicated to running experiments with PrivPGD, the novel approach for differentially private data synthesis introduced in our paper.
+3. **`privpgd.py`**: This script is dedicated to running experiments with PrivPGD, our novel approach for differentially private data synthesis.
 
 ### Running Experiments
 
 To run experiments, you will interact with the scripts via the command line, and command handling is facilitated by Click (version 8.1.7). For example, to run an experiment with PrivPGD using the default hyperparameters and the setup described in our paper on the ACS Income California 2018 dataset, follow these steps:
 
-1. Change directory (cd) to the `experiments` folder.
+1. Change directory (cd) to the `examples` folder.
 2. Run the command:
 
     ```bash
