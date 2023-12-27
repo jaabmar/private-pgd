@@ -37,14 +37,14 @@ The `src` folder contains the core code of the package, organized into several s
    - Handles marginal selection and privatization.
    - Key files and their corresponding mechanisms:
      - `kway.py`: Implements the K-Way mechanism.
-     - `mwem.py`: Implements the MWEM.
-     - `mst.py`: Implements the MST mechanism.
+     - `mwem.py`: Implements the [MWEM](https://arxiv.org/pdf/1901.09136.pdf).
+     - `mst.py`: Implements the [MST](https://arxiv.org/pdf/2108.04978.pdf) mechanism.
    - Additional utility files supporting these mechanisms are also located in this folder.
 
 ### 2. Inference Methods (`src/inference`):
    - Contains the code for generation methods.
    - Subfolders and their specific methods:
-     - `pgm`: Contains the implementation of the PGM method.
+     - `pgm`: Contains the implementation of the [PGM](https://arxiv.org/pdf/1901.09136.pdf) method.
      - `privpgd`: Houses the PrivPGD method, our novel approach for differentially private data generation.
 
 ### 3. Data Handling (`src/data`):
