@@ -9,14 +9,48 @@
 This repository contains the Python implementation of **PrivPGD**, a generation method for marginal-based private data synthesis introduced in the paper [Privacy-preserving data release leveraging optimal transport and particle gradient descent](https://arxiv.org/abs/2312.03871).
 
 * [Overview](#overview)
+* [Contents](#contents)
 * [Getting Started](#getting-started)
 * [Usage](#usage)
-* [Example Scripts and Tutorial](#example-scripts-and-tutorial)
+* [Examples and Tutorial](#examples-and-tutorial)
 * [Contributing](#contributing)
 * [Contact](#contact)
 * [Citation](#citation)
 
 ## Overview
+
+The distribution of sensitive datasets plays a key role in data-driven decision-making across many fields, including healthcare and government. Nevertheless, the release of such datasets often leads to significant privacy concerns. Differential Privacy (DP) has emerged as an effective solution to address these concerns, ensuring privacy preservation in our increasingly data-centric world.
+
+PrivPGD is a novel approach for differentially private tabular data synthesis. It creates high-quality, privacy-preserving copies of protected tabular datasets from noisy measurements of their marginals. PrivPGD leverages particle gradient descent coupled with an optimal transport-based divergence, which facilitates the efficient integration of marginal information during the dataset generation process.
+
+Key advantages of PrivPGD include:
+
+- State-of-the-Art Performance: Demonstrates superior performance in benchmarks and downstream tasks, especially with large datasets.
+- Scalability: Features an optimized gradient computation suitable for parallelization on modern GPUs, making it suitable for handling large datasets and many marginals.
+- Geometry Preservation: Retains the geometry of dataset features, suck as rankings, aligning more naturally with the nuances of real-world data.
+- Domain-Specific Constraints Incorporation: Enables the inclusion of additional constraints in the synthetic data generation process.
+
+## Contents
+
+The `src` folder contains the core code of the package, organized into several subfolders, each catering to specific functionalities:
+
+### 1. Mechanisms (`src/mechanisms`):
+   - Handles marginal selection and privatization.
+   - Key files and their corresponding mechanisms:
+     - `kway.py`: Implements the K-Way mechanism.
+     - `mwem.py`: Implements the MWEM.
+     - `mst.py`: Implements the MST mechanism.
+   - Additional utility files supporting these mechanisms are also located in this folder.
+
+### 2. Data Handling (`src/data`):
+   - Dedicated to downloading and processing data.
+   - Contains scripts and modules for data manipulation, preparation, and loading.
+
+### 3. Inference Methods (`src/inference`):
+   - Contains the code for generation methods.
+   - Subfolders and their specific methods:
+     - `pgm`: Contains the implementation of the PGM method.
+     - `privpgd`: Houses the PrivPGD method, our novel approach for differentially private data generation.
 
 ## Getting Started
 
@@ -63,9 +97,37 @@ There are two ways to install the package:
    ```bash
    pip install git+https://github.com/jaabmar/private-pgd.git
    ```
-## Usage
 
-## Example Scripts and Tutorial
+## Examples and Tutorial
+
+## Examples and Tutorial
+
+In the `examples` folder, you'll find practical examples showcasing how to use the package effectively. These examples are designed to help you understand the application of different mechanisms and methods included in the package.
+
+### Key Experiment Scripts
+
+1. **`experiment.py`**: This is a general file for running experiments. It's a versatile script that can be used for various experiment configurations.
+
+2. **`mst+pgm.py`**: Use this script to run experiments with the PGM generation method, utilizing MST for marginal selection.
+
+3. **`privpgd.py`**: This script is dedicated to running experiments with PrivPGD, the novel approach for differentially private data synthesis introduced in our paper.
+
+### Running Experiments
+
+To run experiments, you will interact with the scripts via the command line, and command handling is facilitated by Click (version 8.1.7). For example, to run an experiment with PrivPGD using the default hyperparameters and the setup described in our paper on the ACS Income California 2018 dataset, follow these steps:
+
+1. Change directory (cd) to the `experiments` folder.
+2. Run the command:
+
+    ```bash
+    python privpgd.py
+    ```
+
+This command will initiate the experiment with PrivPGD using the specified dataset and default settings.
+
+### Step-by-Step Tutorial
+
+For a detailed, step-by-step understanding of how PrivPGD works, refer to the `Tutorial.ipynb` notebook in the `examples` folder. This Jupyter notebook includes comprehensive explanations and visualizations, walking you through the entire process of using PrivPGD for differentially private data synthesis. 
 
 ## Contributing
 
