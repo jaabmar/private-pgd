@@ -112,7 +112,7 @@ In the `examples` folder, you'll find practical examples showcasing how to use t
 
 4. **`privpgd.py`**: This script is dedicated to running experiments with PrivPGD, our novel approach for differentially private data synthesis.
 
-4. **`privpg_with_constraint.py`**: This script showcases how one can incorporate domain-specific constraints into PrivPGD.
+4. **`privpgd_with_constraint.py`**: This script showcases how one can incorporate domain-specific constraints into PrivPGD.
 
 ### Running Experiments
 
