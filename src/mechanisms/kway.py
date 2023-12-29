@@ -55,18 +55,18 @@ class KWay(Mechanism):
         Returns:
             Tuple[Dataset, float]: The synthetic dataset and the associated loss.
         """
-        sigma = gaussian_mech(self.epsilon, self.delta)["sigma"] * np.sqrt(
-            len(workload)
+        sigma = (
+            gaussian_mech(self.epsilon, self.delta)["sigma"]
+            * np.sqrt(len(workload))
+            * self.marginal_sensitivity
         )
         total = data.records if self.bounded else None
         measurements = []
         for cl in workload:
             Q = Identity(data.domain.size(cl))
             x = data.project(cl).datavector()
-            y = x + np.random.normal(
-                loc=0, scale=self.marginal_sensitivity * sigma, size=x.size
-            )
-            measurements.append((Q, y, self.marginal_sensitivity * sigma, cl))
+            y = x + np.random.normal(loc=0, scale=sigma, size=x.size)
+            measurements.append((Q, y, sigma, cl))
 
         est, loss = engine.estimate(measurements, total)
         print("Generating Data...")

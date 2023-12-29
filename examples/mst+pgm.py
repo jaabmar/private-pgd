@@ -110,7 +110,7 @@ def run_mst_pgm(
     print(f"Total loss: {loss}, Elapsed time: {end_time-start_time}")
     if params["savedir"]:
         synth.df.to_csv(
-            os.path.join(params["savedir"], "privpgd_synth_data.csv"),
+            os.path.join(params["savedir"], "mst_pgm_synth_data.csv"),
             index=False,
         )
 

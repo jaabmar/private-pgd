@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 import numpy as np
 from scipy import sparse
@@ -6,12 +6,10 @@ from scipy.special import softmax
 
 from inference.pgm.graphical_model import GraphicalModel
 from inference.pgm.inference import FactoredInference
-from inference.privpgd.particle_model import ParticleModel
 from mechanisms.mechanism import Mechanism
 
 if TYPE_CHECKING:
     from inference.dataset import Dataset
-    from inference.privpgd.inference import AdvancedSlicedInference
 
 
 class MWEM(Mechanism):
@@ -20,7 +18,6 @@ class MWEM(Mechanism):
         epsilon: float,
         delta: float = 0.00001,
         rounds: int = 100,
-        data_init: Optional = None,
         max_model_size: float = 1000,
         bounded: bool = True,
         prng: np.random = np.random,
@@ -32,7 +29,6 @@ class MWEM(Mechanism):
             epsilon (float): Differential privacy parameter epsilon.
             delta (float): Differential privacy parameter delta. Defaults to 0.00001.
             rounds (int): The number of rounds for the mechanism. Defaults to 100.
-            data_init (Optional): Initial data or model. Defaults to None.
             max_model_size (float): Maximum model size in MBytes. Defaults to 1000.
             bounded (bool): Indicates if the privacy definition is bounded or unbounded. Defaults to True.
             prng (np.random): Pseudo Random Number Generator. Defaults to np.random.
@@ -41,13 +37,12 @@ class MWEM(Mechanism):
             epsilon=epsilon, delta=delta, bounded=bounded, prng=prng
         )
         self.rounds = rounds
-        self.data_init = data_init
         self.max_model_size = max_model_size
 
     def worst_approximated(
         self,
         workload_answers: Dict[Tuple[str, ...], np.ndarray],
-        est: Union["GraphicalModel", "ParticleModel"],
+        est: "GraphicalModel",
         workload: List[Tuple[str, ...]],
         eps: float,
         penalty: bool = True,
@@ -57,7 +52,7 @@ class MWEM(Mechanism):
 
         Args:
             workload_answers (Dict[Tuple[str, ...], np.ndarray]): True answers for the queries.
-            est (Union[GraphicalModel, ParticleModel]): The estimated model used for projection.
+            est (GraphicalModel): The estimated model used for projection.
             workload (List[Tuple[str, ...]]): Workload of queries.
             eps (float): Epsilon value for differential privacy.
             penalty (bool): Flag to apply penalty. Defaults to True.
@@ -67,8 +62,8 @@ class MWEM(Mechanism):
         """
         errors = np.array([])
         for cl in workload:
-            bias = est.domain.size(cl) if penalty else 0
             x = workload_answers[cl]
+            bias = est.domain.size(cl) if penalty else 0
             xest = est.project(cl).datavector()
             errors = np.append(errors, np.abs(x - xest).sum() - bias)
 
@@ -79,7 +74,7 @@ class MWEM(Mechanism):
     def run(
         self,
         data: "Dataset",
-        engine: Union["FactoredInference", "AdvancedSlicedInference"],
+        engine: "FactoredInference",
         workload: List[Tuple[str, ...]],
         alpha: float = 0.9,
         records: Optional[int] = None,
@@ -90,7 +85,7 @@ class MWEM(Mechanism):
         Args:
             data (Dataset): The original dataset.
             workload (Optional[List[Tuple[str, ...]]]): A list of queries as tuples of attributes. Defaults to None.
-            engine (Union[FactoredInference, AdvancedSlicedInference]): The inference engine used for estimation.
+            engine (FactoredInference): The inference engine used for estimation.
             alpha (float): Alpha parameter for controlling noise. Defaults to 0.9.
             records(Optional[int]): Number of samples of the generated dataset. Defaults to None, same as original dataset.
 
@@ -100,7 +95,9 @@ class MWEM(Mechanism):
         rounds = min(len(workload), self.rounds)
         rho = self.rho
         rho_per_round = rho / rounds
-        sigma = np.sqrt(0.5 / (alpha * rho_per_round))
+        sigma = (
+            np.sqrt(0.5 / (alpha * rho_per_round)) * self.marginal_sensitivity
+        )
         exp_eps = np.sqrt(8 * (1 - alpha) * rho_per_round)
         domain = data.domain
         total = data.records if self.bounded else None
@@ -113,45 +110,30 @@ class MWEM(Mechanism):
         }
 
         measurements = []
-        if isinstance(engine, FactoredInference):
-            est, _ = engine.estimate(measurements, total)
-        else:
-            est = ParticleModel(
-                data.domain,
-                embedding=engine.embedding,
-                n_particles=engine.n_particles,
-                data_init=self.data_init,
-            )
+        est, _ = engine.estimate(measurements, total)
         cliques = []
         for i in range(1, rounds + 1):
-            if isinstance(engine, FactoredInference):
-                candidates = [
-                    cl
-                    for cl in workload
-                    if size(cliques + [cl]) <= self.max_model_size * i / rounds
-                ]
-                ax = self.worst_approximated(
-                    workload_answers, est, candidates, exp_eps
-                )
-                print(
-                    "Round",
-                    i,
-                    "Selected",
-                    ax,
-                    "Model Size (MB)",
-                    est.size * 8 / 2**20,
-                )
-            else:
-                ax = self.worst_approximated(
-                    workload_answers, est, workload, exp_eps
-                )
+            candidates = [
+                cl
+                for cl in workload
+                if size(cliques + [cl]) <= self.max_model_size * i / rounds
+            ]
+            ax = self.worst_approximated(
+                workload_answers, est, candidates, exp_eps
+            )
+            print(
+                "Round",
+                i,
+                "Selected",
+                ax,
+                "Model Size (MB)",
+                est.size * 8 / 2**20,
+            )
 
             n = domain.size(ax)
             x = data.project(ax).datavector()
 
-            y = x + np.random.normal(
-                loc=0, scale=self.marginal_sensitivity * sigma, size=n
-            )
+            y = x + np.random.normal(loc=0, scale=sigma, size=n)
             Q = sparse.eye(n)
             measurements.append((Q, y, 1.0, ax))
             est, loss = engine.estimate(measurements, total)

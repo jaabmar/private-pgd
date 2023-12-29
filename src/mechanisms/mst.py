@@ -51,7 +51,7 @@ class MST(Mechanism):
             Tuple[Dataset, float]: The synthetic dataset and the associated loss.
         """
         rho = self.rho
-        sigma = np.sqrt(3 / (2 * rho))
+        sigma = np.sqrt(3 / (2 * rho)) * self.marginal_sensitivity
         total = data.records if self.bounded else None
 
         cliques_oneway = [(col,) for col in data.domain]
@@ -96,13 +96,11 @@ class MST(Mechanism):
             x = data.project(proj).datavector()
             y = x + np.random.normal(
                 loc=0,
-                scale=sigma / wgt * self.marginal_sensitivity,
+                scale=sigma / wgt,
                 size=x.size,
             )
             Q = sparse.eye(x.size)
-            measurements.append(
-                (Q, y, sigma / wgt * self.marginal_sensitivity, proj)
-            )
+            measurements.append((Q, y, sigma / wgt, proj))
         return measurements
 
     def select(
