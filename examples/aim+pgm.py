@@ -1,4 +1,5 @@
 import csv
+import logging
 import os
 import time
 
@@ -10,6 +11,8 @@ from inference.evaluation import Evaluator
 from inference.pgm.inference import FactoredInference
 from mechanisms.aim import AIM
 from mechanisms.utils_mechanisms import generate_all_kway_workload
+
+logging.basicConfig(level=logging.INFO)  # Configure logging level
 
 
 @click.command()
@@ -101,7 +104,7 @@ def run_aim_pgm(
         bounded=True,
     )
 
-    workload = generate_all_kway_workload(data=data, degree=2)
+    workload = generate_all_kway_workload(data=data, degree=2, num_marginals=5)
 
     start_time = time.time()
     synth, loss = mechanism.run(

@@ -1,4 +1,5 @@
 import itertools
+import logging
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Union
 
 import networkx as nx
@@ -65,7 +66,7 @@ class MST(Mechanism):
 
         log2 = self.measure(data=data, cliques=cliques, sigma=sigma)
         est, loss = engine.estimate(log1 + log2, total)
-        print("Generating Data...")
+        logging.info("Generating Data...")
         synth = est.synthetic_data(records)
         return synth, loss
 

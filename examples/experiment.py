@@ -1,4 +1,5 @@
 import csv
+import logging
 import os
 import time
 from typing import Any, Dict, Tuple
@@ -9,6 +10,8 @@ from utils_examples import flatten_dict
 from inference.dataset import Dataset
 from inference.evaluation import Evaluator
 from mechanisms.utils_mechanisms import generate_all_kway_workload
+
+logging.basicConfig(level=logging.INFO)  # Configure logging level
 
 
 def load_data_and_prepare_workload(hp: Dict[str, Any]) -> Tuple[Dataset, Any]:

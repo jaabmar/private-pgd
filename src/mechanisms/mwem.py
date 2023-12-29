@@ -1,3 +1,4 @@
+import logging
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -121,12 +122,10 @@ class MWEM(Mechanism):
             ax = self.worst_approximated(
                 workload_answers, est, candidates, exp_eps
             )
-            print(
-                "Round",
+            logging.info(
+                "Round %d, Selected %s, Model Size (MB) %f",
                 i,
-                "Selected",
                 ax,
-                "Model Size (MB)",
                 est.size * 8 / 2**20,
             )
 

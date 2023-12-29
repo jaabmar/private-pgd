@@ -1,3 +1,4 @@
+import logging
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -111,7 +112,7 @@ class AIM(Mechanism):
         # get all the oneway marginals and estimate everything over that
         oneway = [cl for cl in candidates if len(cl) == 1]
         measurements = []
-        print("Initial Sigma", sigma)
+        logging.info("Initial Sigma: %s", sigma)
         rho_used = len(oneway) * 0.5 / sigma**2
         for cl in oneway:
             # discretization
@@ -156,13 +157,22 @@ class AIM(Mechanism):
             z = est.project(cl).datavector()
             est, _ = engine.estimate(measurements, total)
             w = est.project(cl).datavector()
-            print("Selected", cl, "Size", n, "Budget Used", rho_used / self.rho)
+            logging.info(
+                "Selected %s, Size %d, Budget Used %f",
+                cl,
+                n,
+                rho_used / self.rho,
+            )
+
             if np.linalg.norm(w - z, 1) <= sigma * np.sqrt(2 / np.pi) * n:
-                print("(!!!!!!!!!!!!!!!!!!!!!!) Reducing sigma", sigma / 2)
+                logging.info(
+                    "(!!!!!!!!!!!!!!!!!!!!!!) Reducing sigma: %s", sigma / 2
+                )
+
                 sigma /= 2
                 epsilon *= 2
 
-        print("Generating Data...")
+        logging.info("Generating Data...")
         est, loss = engine.estimate(measurements, total)
         return est.synthetic_data(records), loss
 

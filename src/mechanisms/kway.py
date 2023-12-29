@@ -1,3 +1,4 @@
+import logging
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 import numpy as np
@@ -69,6 +70,6 @@ class KWay(Mechanism):
             measurements.append((Q, y, sigma, cl))
 
         est, loss = engine.estimate(measurements, total)
-        print("Generating Data...")
+        logging.info("Generating Data...")
         synth = est.synthetic_data(records)
         return synth, loss

@@ -1,3 +1,4 @@
+import logging
 import random
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
@@ -34,13 +35,10 @@ class AdvancedSlicedInference:
             constraint_regularizer (Optional[Any], optional): Constraint regularizer. Defaults to None.
         """
         self.domain = domain
-        self.hp = hp
         self.embedding = embedding if embedding else Embedding(domain)
         self.constraint_regularizer = constraint_regularizer
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.n_particles = (
-            self.hp["n_particles"] if "n_particles" in hp else 100000
-        )
+        self.n_particles = hp["n_particles"] if "n_particles" in hp else 100000
         self.data_init = hp["data_init"] if "data_init" in hp else None
         self.iters = hp["iters"] if "iters" in hp else 1000
         self.lr = hp["lr"] if "lr" in hp else 10
@@ -172,12 +170,14 @@ class AdvancedSlicedInference:
 
         self.processed_measurements = []
         self.quantized_measurements = []
+        logging.info("Starting projection step.")
         processed_measurements = self.projection_step(measurements)
         quantized_measurements, _ = self.deterministic_quantization(
             processed_measurements
         )
         self.processed_measurements = processed_measurements
         self.quantized_measurements = quantized_measurements
+        logging.info("Projection step completed.")
 
     def set_total(
         self,
@@ -341,7 +341,8 @@ class AdvancedSlicedInference:
         directions = torch.randn(
             num_projections, d, device=self.device, dtype=torch.float32
         )
-        directions /= directions.norm(dim=1, keepdim=True) + 1e-9
+        norm = directions.norm(dim=1, keepdim=True) + 1e-9
+        directions /= norm
 
         # Project X onto random directions: [n, num_projections]
         X_proj = torch.mm(X - 1 / 2, directions.t())
@@ -423,6 +424,8 @@ class AdvancedSlicedInference:
             float: The loss value after optimization.
         """
 
+        logging.info("Starting particle gradient descent optimization.")
+
         # Set up batching, optimizer and scheduler
         self.history_particles = []
         model = self.model
@@ -448,7 +451,7 @@ class AdvancedSlicedInference:
         total_loss = 0
         losses = {}
         proj_indices = list(range(len(proj_keys)))
-        for _ in range(1, iters + 1):  # Iterate epochs
+        for epoch in range(1, iters + 1):  # Iterate epochs
             # Shuffle the keys for random batches
             random.shuffle(proj_indices)  # Shuffle the indices
             paramsX.grad = torch.zeros_like(paramsX).to(self.device)
@@ -461,14 +464,12 @@ class AdvancedSlicedInference:
 
                 # Loss and gradient for domain-specific constraints
                 if self.constraint_regularizer is not None:
-                    new_paramsX = torch.tensor(paramsX.data).requires_grad_(
-                        True
-                    )
+                    new_paramsX = paramsX.clone().detach().requires_grad_(True)
                     (
                         grad,
                         _,
                     ) = self.constraint_regularizer.get_gradient_and_loss(
-                        new_paramsX, self.hp
+                        new_paramsX
                     )
                     grad_mat = grad * (self.scale_reg * 100)
                 else:
@@ -517,8 +518,12 @@ class AdvancedSlicedInference:
                 self.history_particles.append(synth.df)
 
             self.history.append(total_loss)
+            logging.info(
+                "Epoch %d/%d: Total loss = %f", epoch, iters, total_loss
+            )
 
-        return np.sum(self.history)
+        logging.info("Particle gradient descent optimization completed.")
+        return self.history[-1]
 
     def sliced_two_wasserstein_squared_distance_and_gradient(
         self, X: torch.Tensor, Y: torch.Tensor, n_projections: int = 100

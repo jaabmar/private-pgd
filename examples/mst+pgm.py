@@ -1,4 +1,5 @@
 import csv
+import logging
 import os
 import time
 
@@ -10,6 +11,8 @@ from inference.evaluation import Evaluator
 from inference.pgm.inference import FactoredInference
 from mechanisms.mst import MST
 from mechanisms.utils_mechanisms import generate_all_kway_workload
+
+logging.basicConfig(level=logging.INFO)  # Configure logging level
 
 
 @click.command()
