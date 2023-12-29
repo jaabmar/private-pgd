@@ -3,6 +3,7 @@ import os
 import pickle
 
 import pandas as pd
+from data_handler import DataHandler
 from folktables import (
     ACSDataSource,
     ACSEmployment,
@@ -12,8 +13,6 @@ from folktables import (
     ACSTravelTime,
 )
 from sklearn.model_selection import train_test_split
-
-from data.data_handler import DataHandler
 
 base_path = "datasets"
 

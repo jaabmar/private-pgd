@@ -7,9 +7,8 @@ import numpy as np
 import openml
 import pandas as pd
 import requests
+from data_handler import DataHandler
 from sklearn.model_selection import train_test_split
-
-from data.data_handler import DataHandler
 
 base_path = "datasets"
 unprocessed_data = "up_datasets"

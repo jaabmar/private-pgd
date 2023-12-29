@@ -87,12 +87,14 @@ conda activate privpgd
 There are two ways to install the package:
 
 1. **Local Installation:**
-   If you have the package locally, upgrade `pip` to its latest version. Then, use the local setup files to install your package. This method is ideal for development or when you have the source code.
+   Start by cloning the repository from GitHub. Then, upgrade `pip` to its latest version and use the local setup files to install the package. This method is ideal for development or when you have the source code.
    ```bash
+   git clone https://github.com/jaabmar/private-pgd.git
+   cd private-pgd
    pip install --upgrade pip
    pip install -e .
    ```
-2. **Direct Installation from GitHub:**
+2. **Direct Installation from GitHub (Recommended):**
    You can also install the package directly from GitHub. This method is straightforward and ensures you have the latest version.
    ```bash
    pip install git+https://github.com/jaabmar/private-pgd.git
