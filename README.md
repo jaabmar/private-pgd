@@ -112,6 +112,8 @@ In the `examples` folder, you'll find practical examples showcasing how to use t
 
 4. **`privpgd.py`**: This script is dedicated to running experiments with PrivPGD, our novel approach for differentially private data synthesis.
 
+4. **`privpg_with_constraint.py`**: This script showcases how one can incorporate domain-specific constraints into PrivPGD.
+
 ### Running Experiments
 
 To run experiments, you will interact with the scripts via the command line, and command handling is facilitated by Click (version 8.1.7). For example, to run an experiment with PrivPGD using the default hyperparameters and the setup described in our paper on the ACS Income California 2018 dataset, follow these steps:

@@ -275,14 +275,7 @@ class FactoredInference:
                 mu2 = mu.project(proj)
                 x = mu2.torch_datavector()
                 diff = c * (Q @ x - y)
-                if metric == "L1":
-                    loss += abs(diff).sum()
-                    sign = (
-                        diff.sign() if hasattr(diff, "sign") else np.sign(diff)
-                    )
-                    grad = c * (Q.T @ sign)
-                else:
-                    loss += 0.5 * (diff @ diff)
-                    grad = c * (Q.T @ diff)
+                loss += 0.5 * (diff @ diff)
+                grad = c * (Q.T @ diff)
                 gradient[cl] += self.Factor(mu2.domain, grad)
         return float(loss), CliqueVector(gradient)
