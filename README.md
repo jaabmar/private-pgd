@@ -99,10 +99,27 @@ There are two ways to install the package:
    ```bash
    pip install git+https://github.com/jaabmar/private-pgd.git
    ```
-
 ## Examples and Tutorial
 
 In the `examples` folder, you'll find practical examples showcasing how to use the package effectively. These examples are designed to help you understand the application of different mechanisms and methods included in the package.
+
+### Preparing the Data
+
+Before running the scripts, you need to download the ACS datasets:
+
+1. After locally downloading the repository, navigate to the `data` directory:
+
+    ```bash
+    cd path/to/private-pgd/data
+    ```
+
+2. Run the `create_data.py` script to download the datasets:
+
+    ```bash
+    python create_data.py
+    ```
+
+   The datasets will be downloaded and stored in the `datasets` folder within the `data` directory.
 
 ### Key Experiment Scripts
 
@@ -114,7 +131,7 @@ In the `examples` folder, you'll find practical examples showcasing how to use t
 
 4. **`privpgd.py`**: This script is dedicated to running experiments with PrivPGD, our novel approach for differentially private data synthesis.
 
-4. **`privpgd_with_constraint.py`**: This script showcases how one can incorporate domain-specific constraints into PrivPGD.
+5. **`privpgd_with_constraint.py`**: This script showcases how one can incorporate domain-specific constraints into PrivPGD.
 
 ### Running Experiments
 
