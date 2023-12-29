@@ -50,7 +50,7 @@ def create_all_ACS_data(disc_k=35, year="2018"):
             print(f"Directory '{path}' created.")
         else:
             continue
-        # get all acs data and searate label column
+        # get all acs data and create label column
         features, label, _ = datatask.df_to_numpy(acs_data)
         data_raw = pd.DataFrame(features)
         data_raw["label"] = label

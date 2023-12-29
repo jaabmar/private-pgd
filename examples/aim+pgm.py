@@ -18,22 +18,22 @@ logging.basicConfig(level=logging.INFO)  # Configure logging level
 @click.command()
 @click.option(
     "--savedir",
-    default="../src/data/datasets/acs_income_CA_2018_default_32/",
+    default="../data/datasets/acs_income_CA_2018_default_32/",
     help="Directory to save the generated synthetic dataset.",
 )
 @click.option(
     "--train_dataset",
-    default="../src/data/datasets/acs_income_CA_2018_default_32/data_disc.csv",
+    default="../data/datasets/acs_income_CA_2018_default_32/data_disc.csv",
     help="File path for the training dataset (CSV format).",
 )
 @click.option(
     "--test_dataset",
-    default="../src/data/datasets/acs_income_CA_2018_default_32/testdata_disc.csv",
+    default="../data/datasets/acs_income_CA_2018_default_32/testdata_disc.csv",
     help="File path for the test dataset (CSV format).",
 )
 @click.option(
     "--domain",
-    default="../src/data/datasets/acs_income_CA_2018_default_32/domain.json",
+    default="../data/datasets/acs_income_CA_2018_default_32/domain.json",
     help="File path for the domain description (JSON format).",
 )
 @click.option(

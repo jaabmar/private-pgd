@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO)  # Configure logging level
 @click.command()
 @click.option(
     "--savedir",
-    default="../src/data/datasets/acs_income_CA_2018_default_32/",
+    default="../data/datasets/acs_income_CA_2018_default_32/",
     help="Directory to save the generated synthetic dataset.",
 )
 @click.option(
@@ -111,9 +111,9 @@ def run_constraint_privpgd(
     params = locals()
 
     train_dataset = (
-        "../src/data/datasets/acs_income_CA_2018_default_32/data_disc.csv"
+        "../data/datasets/acs_income_CA_2018_default_32/data_disc.csv"
     )
-    domain = "../src/data/datasets/acs_income_CA_2018_default_32/domain.json"
+    domain = "../data/datasets/acs_income_CA_2018_default_32/domain.json"
 
     data = Dataset.load(
         train_dataset,
