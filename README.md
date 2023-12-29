@@ -27,11 +27,11 @@ Key advantages of PrivPGD include:
 - State-of-the-Art Performance: Demonstrates superior performance in benchmarks and downstream tasks, especially with large datasets.
 - Scalability: Features an optimized gradient computation suitable for parallelization on modern GPUs, making it particularly fast at handling large datasets and many marginals.
 - Geometry Preservation: Retains the geometry of dataset features, suck as rankings, aligning more naturally with the nuances of real-world data.
-- Domain-Specific Constraints Incorporation: Enables the inclusion of additional constraints in the synthetic data generation process.
+- Domain-Specific Constraints Incorporation: Enables the inclusion of additional constraints in the synthetic data.
 
 ## Contents
 
-The `src` folder contains the core code of the package, organized into several subfolders, each catering to specific functionalities. The codebase is heavily inspired by the [repository of PGM](https://github.com/ryan112358/private-pgm), reflecting in the design and implementation of various components.
+The `src` folder contains the core code of the package, organized into several subfolders, each catering to specific functionalities. The codebase is heavily inspired by the [repository of PGM](https://github.com/ryan112358/private-pgm).
 
 ### 1. Mechanisms (`src/mechanisms`):
    - Handles marginal selection and privatization.
@@ -39,13 +39,14 @@ The `src` folder contains the core code of the package, organized into several s
      - `kway.py`: Implements the K-Way mechanism.
      - `mwem.py`: Implements the [MWEM](https://arxiv.org/pdf/1901.09136.pdf).
      - `mst.py`: Implements the [MST](https://arxiv.org/pdf/2108.04978.pdf) mechanism.
+     - `aim.py`: Implements the [AIM](https://arxiv.org/pdf/2201.12677.pdf).
    - Additional utility files supporting these mechanisms are also located in this folder.
 
-### 2. Inference Methods (`src/inference`):
+### 2. Generation Methods (`src/inference`):
    - Contains the code for generation methods.
    - Subfolders and their specific methods:
      - `pgm`: Contains the implementation of the [PGM](https://arxiv.org/pdf/1901.09136.pdf) method.
-     - `privpgd`: Houses the PrivPGD method, our novel approach for differentially private data generation.
+     - `privpgd`: Contains the PrivPGD method, our novel approach for differentially private data generation.
 
 ### 3. Data Handling (`src/data`):
    - Dedicated to downloading and processing data.
@@ -107,7 +108,9 @@ In the `examples` folder, you'll find practical examples showcasing how to use t
 
 2. **`mst+pgm.py`**: Use this script to run experiments with the PGM generation method, using MST for marginal selection.
 
-3. **`privpgd.py`**: This script is dedicated to running experiments with PrivPGD, our novel approach for differentially private data synthesis.
+3. **`aim+pgm.py`**: Use this script to run experiments with the PGM generation method, using AIM for marginal selection.
+
+4. **`privpgd.py`**: This script is dedicated to running experiments with PrivPGD, our novel approach for differentially private data synthesis.
 
 ### Running Experiments
 

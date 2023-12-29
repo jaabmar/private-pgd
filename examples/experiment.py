@@ -31,6 +31,7 @@ def initialize_mechanism_and_inference(hp: Dict[str, Any]) -> Tuple[Any, Any]:
         "KWay": ("mechanisms.kway", "KWay"),
         "MWEM": ("mechanisms.mwem", "MWEM"),
         "MST": ("mechanisms.mst", "MST"),
+        "AIM": ("mechanisms.aim", "AIM"),
     }
     inference_methods = {
         "pgm_euclid": ("inference.pgm.inference", "FactoredInference"),
@@ -42,6 +43,14 @@ def initialize_mechanism_and_inference(hp: Dict[str, Any]) -> Tuple[Any, Any]:
 
     mechanism_module, mechanism_class = mechanisms[hp["mechanism"]]
     inference_module, inference_class = inference_methods[hp["inference_type"]]
+
+    if (
+        inference_class == "AdvancedSlicedInference"
+        and mechanism_class != "KWay"
+    ):
+        raise ValueError(
+            "AdvancedSlicedInference must be used with KWay mechanism only."
+        )
 
     Mechanism = getattr(
         __import__(mechanism_module, fromlist=[mechanism_class]),
@@ -65,7 +74,13 @@ def initialize_mechanism_and_inference(hp: Dict[str, Any]) -> Tuple[Any, Any]:
             epsilon=hp["epsilon"],
             delta=hp["delta"],
             rounds=hp["rounds"],
-            data_init=hp["data_init"],
+            max_model_size=hp["max_model_size"],
+            bounded=True,
+        )
+    elif hp["mechanism"] == "AIM":
+        Mechanism = Mechanism(
+            epsilon=hp["epsilon"],
+            delta=hp["delta"],
             max_model_size=hp["max_model_size"],
             bounded=True,
         )
@@ -161,7 +176,7 @@ def initialize_mechanism_and_inference(hp: Dict[str, Any]) -> Tuple[Any, Any]:
 @click.option(
     "--mechanism",
     default="KWay",
-    type=click.Choice(["KWay", "MST", "MWEM"]),
+    type=click.Choice(["KWay", "MST", "MWEM", "AIM"]),
     help="Type of mechanism to use in the privacy-preserving algorithm.",
 )
 @click.option(
