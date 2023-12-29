@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Callable, Dict, List, Tuple, Union
 
 import numpy as np
 import ot
@@ -110,8 +110,8 @@ class Evaluator:
             e = np.linalg.norm(X / X.sum() - Y / Y.sum(), 1)
             errors.append(e)
         return {
-            f"{name}l1_mean": np.mean(errors),
-            f"{name}l1_sum": np.sum(errors),
+            f"{name}l1_avg": np.mean(errors),
+            f"{name}l1_max": np.max(errors),
         }
 
     def evaluate_l2(self, name: str = "") -> Dict[str, float]:
@@ -131,8 +131,8 @@ class Evaluator:
             e = np.linalg.norm(X / X.sum() - Y / Y.sum(), 2)
             errors.append(e)
         return {
-            f"{name}l2_mean": np.mean(errors),
-            f"{name}l2_sum": np.sum(errors),
+            f"{name}l2_avg": np.mean(errors),
+            f"{name}l2_max": np.max(errors),
         }
 
     def evaluate_w(
@@ -187,74 +187,10 @@ class Evaluator:
             )
             dicterrors[proj] = errors[-1]
         return {
-            f"{name}w_mean": np.mean(errors),
+            f"{name}w_avg": np.mean(errors),
             f"{name}w_sum": np.sum(errors),
             f"{name}w_max": max(errors),
         }, dicterrors
-
-    def evaluate_marginals(
-        self,
-        dict_marginals: Dict[Tuple[str, ...], np.ndarray],
-        dict_weights: Optional[Dict[Tuple[str, ...], np.ndarray]] = None,
-        name: str = "",
-    ) -> Dict[str, float]:
-        """
-        Evaluates the marginals from a given dictionary of marginals and optional weights.
-
-        Args:
-            dict_marginals (Dict[Tuple[str, ...], np.ndarray]): The dictionary of marginals.
-            dict_weights (Optional[Dict[Tuple[str, ...], np.ndarray]]): The dictionary of weights for each marginal.
-                                                                        If None, equal weights are used.
-            name (str): A prefix for metric names.
-
-        Returns:
-            Dict[str, float]: A dictionary containing the mean, sum, and maximum of Wasserstein distances for the evaluated
-                            marginals.
-        """
-        errors = []
-        dicterrors = {}
-        for proj in dict_marginals.keys():
-            self.dataproj = self.data.project(proj)
-
-            X, weightsprt = self.compress(
-                self.dataproj.df.values, self.dataproj.weights
-            )
-            self.weightspr[proj] = abs(weightsprt) / sum(abs(weightsprt))
-            lproj = list(proj)
-            self.Xemb[proj] = (
-                self.embedding.embedd(pd.DataFrame(X, columns=lproj), proj)
-                .detach()
-                .cpu()
-                .numpy()
-            )
-
-            self.synthproj = dict_marginals[proj].detach().cpu().numpy()
-            if dict_weights:
-                weights = dict_weights[proj].detach().cpu().numpy()
-            else:
-                weights = np.ones((self.synthproj.shape[0]))
-                weights = weights / np.sum(weights)
-            Xpub, weightspub = self.compress(
-                pd.DataFrame(self.synthproj), weights
-            )
-
-            weightspr = self.weightspr[proj]
-            weightspub = abs(weightspub) / sum(abs(weightspub))
-            lproj = list(proj)
-            Xemb = self.Xemb[proj]
-
-            Xpubemb = Xpub
-            errors.append(
-                self.efficient_weighted_swd(
-                    Xemb, weightspr, Xpubemb, weightspub
-                )
-            )
-            dicterrors[proj] = errors[-1]
-        return {
-            f"{name}_w_mean": np.mean(errors),
-            f"{name}_w_sum": np.sum(errors),
-            f"{name}_w_max": max(errors),
-        }
 
     def efficient_weighted_swd(
         self,
