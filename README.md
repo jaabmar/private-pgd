@@ -79,8 +79,8 @@ To set up your environment and install the package, follow these steps:
 
 Start by creating a Conda environment with Python 3.11.5. This step ensures your package runs in an environment with the correct Python version. 
 ```bash
-conda create -n myenv python=3.11.5
-conda activate myenv
+conda create -n privpgd python=3.11.5
+conda activate privpgd
 ```
 #### Install the Package
 
