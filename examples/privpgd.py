@@ -27,11 +27,6 @@ logging.basicConfig(level=logging.INFO)  # Configure logging level
     help="File path for the training dataset (CSV format).",
 )
 @click.option(
-    "--test_dataset",
-    default="../data/datasets/acs_income_CA_2018_default_32/testdata_disc.csv",
-    help="File path for the test dataset (CSV format).",
-)
-@click.option(
     "--domain",
     default="../data/datasets/acs_income_CA_2018_default_32/domain.json",
     help="File path for the domain description (JSON format).",
@@ -60,7 +55,7 @@ logging.basicConfig(level=logging.INFO)  # Configure logging level
     type=int,
     help="Number of particles for PrivPGD.",
 )
-@click.option("--lr", default=10.0, type=float, help="Learning rate.")
+@click.option("--lr", default=0.1, type=float, help="Learning rate.")
 @click.option(
     "--scheduler_step",
     default=50,
@@ -87,8 +82,8 @@ logging.basicConfig(level=logging.INFO)  # Configure logging level
 )
 @click.option(
     "--p_mask",
-    default=0.8,
-    type=float,
+    default=80,
+    type=int,
     help="Percentage of randomly masked gradients in PrivPGD.",
 )
 @click.option(
@@ -100,7 +95,6 @@ logging.basicConfig(level=logging.INFO)  # Configure logging level
 def run_privpgd(
     savedir,
     train_dataset,
-    test_dataset,
     domain,
     epsilon,
     delta,
@@ -169,8 +163,7 @@ def run_privpgd(
             {
                 k: v
                 for k, v in params.items()
-                if k
-                not in ["savedir", "train_dataset", "test_dataset", "domain"]
+                if k not in ["savedir", "train_dataset", "domain"]
             }
         ),
         **flatten_dict(results),

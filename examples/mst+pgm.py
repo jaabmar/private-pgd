@@ -27,11 +27,6 @@ logging.basicConfig(level=logging.INFO)  # Configure logging level
     help="File path for the training dataset (CSV format).",
 )
 @click.option(
-    "--test_dataset",
-    default="../data/datasets/acs_income_CA_2018_default_32/testdata_disc.csv",
-    help="File path for the test dataset (CSV format).",
-)
-@click.option(
     "--domain",
     default="../data/datasets/acs_income_CA_2018_default_32/domain.json",
     help="File path for the domain description (JSON format).",
@@ -48,8 +43,8 @@ logging.basicConfig(level=logging.INFO)  # Configure logging level
     type=float,
     help="Delta parameter for differential privacy.",
 )
-@click.option("--lr", default=10.0, type=float, help="Learning rate.")
-@click.option("--iters", default=1000, type=int, help="Number of iterations.")
+@click.option("--lr", default=1.0, type=float, help="Learning rate.")
+@click.option("--iters", default=3000, type=int, help="Number of iterations.")
 @click.option(
     "--max_model_size",
     default=1000,
@@ -58,7 +53,7 @@ logging.basicConfig(level=logging.INFO)  # Configure logging level
 )
 @click.option(
     "--warm_start",
-    default=True,
+    default=False,
     type=bool,
     help="Whether to use warm start.",
 )
@@ -71,7 +66,6 @@ logging.basicConfig(level=logging.INFO)  # Configure logging level
 def run_mst_pgm(
     savedir,
     train_dataset,
-    test_dataset,
     domain,
     epsilon,
     delta,
@@ -136,8 +130,7 @@ def run_mst_pgm(
             {
                 k: v
                 for k, v in params.items()
-                if k
-                not in ["savedir", "train_dataset", "test_dataset", "domain"]
+                if k not in ["savedir", "train_dataset", "domain"]
             }
         ),
         **flatten_dict(results),

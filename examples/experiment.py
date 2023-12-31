@@ -108,11 +108,6 @@ def initialize_mechanism_and_inference(hp: Dict[str, Any]) -> Tuple[Any, Any]:
     help="File path for the training dataset (CSV format).",
 )
 @click.option(
-    "--test_dataset",
-    default="../data/datasets/acs_income_CA_2018_default_32/testdata_disc.csv",
-    help="File path for the test dataset (CSV format).",
-)
-@click.option(
     "--domain",
     default="../data/datasets/acs_income_CA_2018_default_32/domain.json",
     help="File path for the domain description (JSON format).",
@@ -172,7 +167,7 @@ def initialize_mechanism_and_inference(hp: Dict[str, Any]) -> Tuple[Any, Any]:
 )
 @click.option(
     "--warm_start",
-    default=True,
+    default=False,
     type=bool,
     help="Whether to use warm start in PGM.",
 )
@@ -183,7 +178,7 @@ def initialize_mechanism_and_inference(hp: Dict[str, Any]) -> Tuple[Any, Any]:
     help="Type of mechanism to use in the privacy-preserving algorithm.",
 )
 @click.option(
-    "--lr", default=10.0, type=float, help="Learning rate for PGM or PrivPGD."
+    "--lr", default=0.1, type=float, help="Learning rate for PGM or PrivPGD."
 )
 @click.option(
     "--scheduler_step",
@@ -211,8 +206,8 @@ def initialize_mechanism_and_inference(hp: Dict[str, Any]) -> Tuple[Any, Any]:
 )
 @click.option(
     "--p_mask",
-    default=0.8,
-    type=float,
+    default=80,
+    type=int,
     help="Percentage of randomly masked gradients in PrivPGD.",
 )
 @click.option(
@@ -236,7 +231,6 @@ def initialize_mechanism_and_inference(hp: Dict[str, Any]) -> Tuple[Any, Any]:
 def experiment(
     savedir,
     train_dataset,
-    test_dataset,
     domain,
     epsilon,
     delta,
@@ -304,8 +298,7 @@ def experiment(
             {
                 k: v
                 for k, v in params.items()
-                if k
-                not in ["savedir", "train_dataset", "test_dataset", "domain"]
+                if k not in ["savedir", "train_dataset", "domain"]
             }
         ),
         **flatten_dict(results),

@@ -48,7 +48,7 @@ logging.basicConfig(level=logging.INFO)  # Configure logging level
     type=int,
     help="Number of particles for PrivPGD.",
 )
-@click.option("--lr", default=10.0, type=float, help="Learning rate.")
+@click.option("--lr", default=0.1, type=float, help="Learning rate.")
 @click.option(
     "--scheduler_step",
     default=50,
@@ -75,8 +75,8 @@ logging.basicConfig(level=logging.INFO)  # Configure logging level
 )
 @click.option(
     "--p_mask",
-    default=0.8,
-    type=float,
+    default=80,
+    type=int,
     help="Percentage of randomly masked gradients in PrivPGD.",
 )
 @click.option(

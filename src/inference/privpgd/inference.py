@@ -41,9 +41,9 @@ class AdvancedSlicedInference:
         self.n_particles = hp["n_particles"] if "n_particles" in hp else 100000
         self.data_init = hp["data_init"] if "data_init" in hp else None
         self.iters = hp["iters"] if "iters" in hp else 1000
-        self.lr = hp["lr"] if "lr" in hp else 10
+        self.lr = hp["lr"] if "lr" in hp else 0.1
         self.batch_size = hp["batch_size"] if "batch_size" in hp else 5
-        self.p_mask = hp["p_mask"] if "p_mask" in hp else 0.8
+        self.p_mask = hp["p_mask"] if "p_mask" in hp else 80
         self.scale_reg = hp["scale_reg"] if "scale_reg" in hp else 0.0
         self.num_projections = (
             hp["num_projections"] if "num_projections" in hp else 10

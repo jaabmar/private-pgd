@@ -48,10 +48,6 @@ The `src` folder contains the core code of the package, organized into several s
      - `pgm`: Contains the implementation of the [PGM](https://arxiv.org/pdf/1901.09136.pdf) method.
      - `privpgd`: Contains the PrivPGD method, our novel approach for differentially private data generation.
 
-### 3. Data Handling (`src/data`):
-   - Dedicated to downloading and processing data.
-   - Contains scripts and modules for data manipulation, preparation, and loading.
-
 ## Getting Started
 
 ### Dependencies

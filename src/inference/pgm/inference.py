@@ -43,10 +43,9 @@ class FactoredInference:
         """
         self.domain = domain
         self.metric = "L2"
-        self.hp = hp
-        self.iters = hp["iters"]
-        self.warm_start = hp["warm_start"]
-        self.stepsize = self.hp["lr"]
+        self.iters = hp["iters"] if "iters" in hp else 3000
+        self.warm_start = hp["warm_start"] if "warm_start" in hp else False
+        self.stepsize = hp["lr"] if "lr" in hp else 1.0
         self.elim_order = elim_order
 
         self.embedding = Embedding(domain, base_domain=None, supports=None)
@@ -106,14 +105,32 @@ class FactoredInference:
         Returns:
             List[Tuple[np.ndarray, np.ndarray, float, Union[str, Tuple[str, ...]]]]: The processed measurements.
         """
+        assert type(measurements) is list, (
+            "measurements must be a list, given " + measurements
+        )
+        assert all(
+            len(m) == 4 for m in measurements
+        ), "each measurement must be a 4-tuple (Q, y, noise,proj)"
         ans = []
         for Q, y, noise, proj in measurements:
+            assert (
+                Q is None or Q.shape[0] == y.size
+            ), "shapes of Q and y are not compatible"
             if type(proj) is list:
                 proj = tuple(proj)
             if type(proj) is not tuple:
                 proj = (proj,)
             if Q is None:
                 Q = sparse.eye(self.domain.size(proj))
+            assert np.isscalar(
+                noise
+            ), "noise must be a real value, given " + str(noise)
+            assert all(a in self.domain for a in proj), (
+                str(proj) + " not contained in domain"
+            )
+            assert Q.shape[1] == self.domain.size(
+                proj
+            ), "shapes of Q and proj are not compatible"
             ans.append((Q, y, noise, proj))
         return ans
 
@@ -149,6 +166,7 @@ class FactoredInference:
         self.groups = defaultdict(lambda: [])
         self.fixed_measurements = []
         for Q, y, noise, proj in measurements:
+            y = torch.tensor(y, dtype=torch.float32, device=self.device)
             if isinstance(Q, np.ndarray):
                 Q = torch.tensor(Q, dtype=torch.float32, device=self.device)
             elif sparse.issparse(Q):
@@ -156,7 +174,6 @@ class FactoredInference:
                 idx = torch.LongTensor(np.array([Q.row, Q.col])).to(self.device)
                 vals = torch.FloatTensor(Q.data).to(self.device)
                 Q = torch.sparse_coo_tensor(idx, vals, device=self.device)
-            y = torch.tensor(y, dtype=torch.float32, device=self.device)
             m = (Q, y, noise, proj)
             self.fixed_measurements.append(m)
             for cl in sorted(model_cliques, key=model.domain.size):
@@ -215,8 +232,6 @@ class FactoredInference:
         ans = self.marginal_loss(mu)
         if ans[0] == 0:
             return ans[0]
-
-        nols = self.stepsize is not None
         if np.isscalar(self.stepsize):
             alpha = float(self.stepsize)
             stepsize = lambda t: alpha
@@ -232,7 +247,7 @@ class FactoredInference:
                 theta = omega - alpha * dL
                 mu = model.belief_propagation(theta)
                 ans = self.marginal_loss(mu)
-                if nols or curr_loss - ans[0] >= 0.5 * alpha * dL.dot(nu - mu):
+                if curr_loss - ans[0] >= 0.5 * alpha * dL.dot(nu - mu):
                     break
                 alpha *= 0.5
 
@@ -266,7 +281,6 @@ class FactoredInference:
 
         loss = 0.0
         gradient = {}
-
         for cl in marginals:
             mu = marginals[cl]
             gradient[cl] = self.Factor.zeros(mu.domain)
