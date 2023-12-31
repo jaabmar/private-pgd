@@ -179,3 +179,14 @@ If you find this code useful, please consider citing our paper:
   primaryClass={stat.ML}
 }
 ```
+
+## Work in Progress
+
+We are actively developing new features and improvements for our differential privacy framework:
+
+- **Evaluation Pipeline**: Incorporating other evaluation metrics, like covariance matrix differences and higher-order queries, and assessing performance in downstream tasks.
+- **Benchmark with Additional Algorithms**: Integration of algorithms like Private GSD, RAP, and GEM is underway, to provide a broader comparison benchmark. 
+
+These updates are part of our continuous effort to refine our framework and provide a robust benchmark in the field of differentially private data synthesis.
+
+*Note: The features and integrations mentioned are in active development and will be part of future releases.*
