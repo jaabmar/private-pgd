@@ -182,10 +182,10 @@ If you find this code useful, please consider citing our paper:
 
 ## Work in Progress
 
-We are actively developing new features and improvements for our differential privacy framework:
+We are actively developing new features and improvements for our framework:
 
-- **Evaluation Pipeline**: Incorporating other evaluation metrics, like covariance matrix differences and higher-order queries, and assessing performance in downstream tasks.
-- **Benchmark with Additional Algorithms**: Integration of algorithms like Private GSD, RAP, and GEM is underway, to provide a broader comparison benchmark. 
+- **Evaluation Pipeline**: Incorporating other evaluation metrics, like differences in the covariance matrix and other higher-order queries, and assessing performance in downstream tasks.
+- **Benchmark with Additional Algorithms**: Integration of algorithms like Private GSD, RAP, and GEM is underway, to provide a broader benchmark comparison. 
 
 These updates are part of our continuous effort to refine our framework and provide a robust benchmark in the field of differentially private data synthesis.
 
