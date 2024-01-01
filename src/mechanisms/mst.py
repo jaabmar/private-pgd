@@ -1,6 +1,6 @@
 import itertools
 import logging
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple
 
 import networkx as nx
 import numpy as np
@@ -9,11 +9,8 @@ from scipy import sparse
 
 from inference.dataset import Dataset
 from inference.domain import Domain
+from inference.pgm.inference import FactoredInference
 from mechanisms.mechanism import Mechanism
-
-if TYPE_CHECKING:
-    from inference.pgm.inference import FactoredInference
-    from inference.privpgd.inference import AdvancedSlicedInference
 
 
 class MST(Mechanism):
@@ -36,7 +33,7 @@ class MST(Mechanism):
     def run(
         self,
         data: "Dataset",
-        engine: Union["FactoredInference", "AdvancedSlicedInference"],
+        engine: "FactoredInference",
         workload: List[Tuple[str, ...]] = None,
         records: Optional[int] = None,
     ) -> Tuple["Dataset", float]:
@@ -45,7 +42,7 @@ class MST(Mechanism):
 
         Args:
             data (Dataset): The original dataset.
-            engine (Union[FactoredInference,AdvancedSlicedInference]): The inference engine used for estimation.
+            engine (FactoredInference): The inference engine used for estimation.
             records(Optional[int]): Number of samples of the generated dataset. Defaults to None, same as original dataset.
 
         Returns:
@@ -58,11 +55,11 @@ class MST(Mechanism):
         cliques_oneway = [(col,) for col in data.domain]
         log1 = self.measure(data=data, cliques=cliques_oneway, sigma=sigma)
 
-        est, loss = engine.estimate(log1, total)
-        cliques = self.select(
-            est=est,
-            data=data,
+        engine_select = FactoredInference(
+            domain=engine.domain, hp={"iters": 3000}
         )
+        est_select, _ = engine_select.estimate(log1, total)
+        cliques = self.select(est=est_select, data=data)
 
         log2 = self.measure(data=data, cliques=cliques, sigma=sigma)
         est, loss = engine.estimate(log1 + log2, total)
@@ -106,7 +103,7 @@ class MST(Mechanism):
 
     def select(
         self,
-        est: Union["FactoredInference", "AdvancedSlicedInference"],
+        est: "FactoredInference",
         data: "Dataset",
         cliques: List[Tuple[str, ...]] = [],
     ) -> List[Tuple[str, ...]]:
@@ -114,7 +111,7 @@ class MST(Mechanism):
         Selects additional cliques based on estimation errors.
 
         Args:
-            est (Union[FactoredInference,AdvancedSlicedInference]): The current estimation.
+            est (FactoredInference): The current estimation.
             data (Dataset): The dataset.
             cliques (List[Tuple[str, ...]]): The list of current cliques.
         Returns:
@@ -134,7 +131,8 @@ class MST(Mechanism):
             weights[a, b] = np.linalg.norm(x - xhat, 1)
 
         r = len(list(nx.connected_components(T)))
-        epsilon = np.sqrt(8 * self.rho / (r - 1))
+        rho = self.rho / 3.0
+        epsilon = np.sqrt(8 * rho / (r - 1))
         for _ in range(r - 1):
             candidates = [e for e in candidates if not ds.connected(*e)]
             wgts = np.array([weights[e] for e in candidates])
