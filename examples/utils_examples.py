@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from matplotlib.animation import FuncAnimation
-
 from mechanisms.ektelo_matrix import Identity
 from mechanisms.privacy_calibrator import gaussian_mech
 

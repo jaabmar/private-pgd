@@ -3,9 +3,9 @@ import logging
 import os
 import time
 from typing import Any, Dict, Tuple
-
+import pdb
 import click
-from utils_examples import flatten_dict
+from examples.utils_examples import flatten_dict
 
 from inference.dataset import Dataset
 from inference.evaluation import Evaluator
@@ -228,7 +228,16 @@ def initialize_mechanism_and_inference(hp: Dict[str, Any]) -> Tuple[Any, Any]:
     type=int,
     help="Number of records to generate for PGM. 'None' for same size as original dataset.",
 )
-def experiment(
+@click.option(
+    "--run_id",
+    default="",
+    type=int,
+    help="Number of records to generate for PGM. 'None' for same size as original dataset.",
+)
+
+
+
+def experiment_from_locals(
     savedir,
     train_dataset,
     domain,
@@ -252,6 +261,7 @@ def experiment(
     batch_size,
     rounds,
     records,
+    run_id
 ):
     """
     Run an experiment with specified parameters for privacy-preserving data synthesis.
@@ -259,6 +269,19 @@ def experiment(
     """
 
     params = locals()
+    experiment(params)
+
+
+
+def experiment(
+   params
+):
+    """
+    Run an experiment with specified parameters for privacy-preserving data synthesis.
+    This tool supports various mechanisms and settings, allowing for extensive configurability.
+    """
+
+    run_id = params["run_id"]
 
     data, workload = load_data_and_prepare_workload(params)
     mechanism, inference_method = initialize_mechanism_and_inference(params)
@@ -280,7 +303,7 @@ def experiment(
     print(f"Total loss: {loss}, Elapsed time: {end_time-start_time}")
     if params["savedir"]:
         synth.df.to_csv(
-            os.path.join(params["savedir"], "synth_data.csv"), index=False
+            os.path.join(params["savedir"], f"synth_data{run_id}.csv"), index=False
         )
 
     print("Starting to evaluate...")
@@ -289,9 +312,14 @@ def experiment(
     evaluator.update_synth(synth)
     results, _ = evaluator.evaluate()
 
-    dataset_name = os.path.basename(os.path.dirname(train_dataset))
+    dataset_name = params['dataset']
+
+
+
     experiment_results = {
-        "dataset_name": dataset_name,
+        "dataset" : params['dataset'],
+        "dataset_n": data.df.shape[0], 
+        "dataset_d" : data.df.shape[1],
         "time": time.time() - start_time,
         "loss": loss,
         **flatten_dict(
@@ -305,7 +333,7 @@ def experiment(
     }
 
     # File to save results
-    results_file = os.path.join(savedir, "experiment_results.csv")
+    results_file = os.path.join(params["savedir"], f"experiment_results{run_id}.csv")
     file_exists = os.path.isfile(results_file)
 
     with open(results_file, "a", newline="") as csvfile:
@@ -317,7 +345,7 @@ def experiment(
         writer.writerow(experiment_results)
 
     print(f"Results saved to {results_file}")
-
+    return experiment_results
 
 if __name__ == "__main__":
-    experiment()
+    experiment_from_locals()
