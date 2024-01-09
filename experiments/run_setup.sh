@@ -2,10 +2,12 @@
 export PYTHONPATH=$PYTHONPATH:.
 export TMPDIR=/cluster/work/yang/donhausk/privacy-ot/wandb
 export WANDB_DIR=/cluster/work/yang/donhausk/privacy-ot/wandb/
-export EXPERIMENT_BASE_PATH=/cluster/work/yang/donhausk/privacy-ot/data
+export EXPERIMENT_BASE_PATH=/cluster/work/yang/donhausk/privacy-ot/
 export WANDB_ENTITY_NAME=eth-sml-privacy-project
 export SLURM_TMPDIR=/cluster/work/yang/donhausk/privacy-ot/slurm
 export BASE_DIR="/cluster/work/yang/donhausk/privacy-ot/data"
+export BENCHMARK_DIR="/cluster/work/yang/jabadmartine"
+
 export ACCOUNT_NAME=es_yang
 
 #!/bin/bash

@@ -57,7 +57,16 @@ class AdvancedSlicedInference:
         self.eval_particles = (
             hp["eval_particles"] if "eval_particles" in hp else False
         )
-
+        self.iters_proj = hp["iters_proj"] if "iters_proj" in hp else 1750
+        self.num_projections_proj = (
+            hp["num_projections_proj"] if "num_projections_proj" in hp else 200
+        )
+        self.scheduler_step_proj = (
+            hp["scheduler_step_proj"] if "scheduler_step_proj" in hp else 100
+        )
+        self.scheduler_gamma_proj = (
+            hp["scheduler_gamma_proj"] if "scheduler_gamma_proj" in hp else 0.8
+        )
         self.yprobs = {}
         self.model = None
         self.measurements = []
@@ -253,10 +262,10 @@ class AdvancedSlicedInference:
                     ),
                     self.centers[proj],
                     lr=0.1,
-                    num_projections=200,
-                    step=100,
-                    gamma=0.8,
-                    num_iterations=1750,
+                    num_projections=self.num_projections_proj,
+                    step=self.scheduler_step_proj,
+                    gamma=self.scheduler_gamma_proj,
+                    num_iterations=self.iters_proj,
                 )
                 self.yprobs[proj] = yprobnorm
             m = (yprobnorm, noise, proj)

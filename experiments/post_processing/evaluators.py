@@ -5,6 +5,7 @@ from inference.embedding import Embedding
 from ot import sliced_wasserstein_distance  
 import pickle
 from itertools import combinations
+import pdb
 
 class DatasetEvaluator:
     def __init__(self, X, Y, dataset_name, main_path):
@@ -30,7 +31,8 @@ class DatasetEvaluator:
             avg_swd_for_marginals = []
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             dims = self.embedding.get_dims(workload)
-            for dim in dims:
+            for proj in workload:
+                dim = dims[proj].to(self.Xemb.device)
                 
                 projected_X_full = self.Xemb[:,dim]
                 projected_X, counts_X = torch.unique(projected_X_full, dim=0, return_counts=True)
@@ -42,9 +44,9 @@ class DatasetEvaluator:
 
 
                 # Ensure that sliced_wasserstein_distance can work with GPU tensors or
-                # is appropriately modified to do so.
+                # is appropriately modified to do so
                 swd = sliced_wasserstein_distance(
-                    projected_X, project_Y, counts_X, counts_X, n_projections=num_projections, p=p
+                    projected_X, project_Y, counts_X, counts_Y, n_projections=num_projections, p=p
                 ) ** p
 
 
@@ -181,6 +183,7 @@ class DatasetEvaluator:
         upper_bound = 0.95
 
         for _ in range(num_queries):
+            
             while True:
                 # Generate random columns and bounds
                 chosen_columns = np.random.choice(self.Xembnp.shape[1], s, replace=False)
@@ -222,9 +225,11 @@ class DatasetEvaluator:
         file_path = os.path.join(folder_path, filename)
 
         if os.path.exists(file_path):
+            print(f"use existing data from the path {file_path}")
             with open(file_path, 'rb') as f:
                 data = pickle.load(f)
-        else:
+        else: 
+            print(f"create new data under the path {file_path}")
             if not os.path.exists(folder_path):
                 os.makedirs(folder_path)
             data = generator_func(*args)
@@ -239,9 +244,9 @@ class DatasetEvaluator:
         for metric in metrics_to_evaluate:
             if metric == "cov_fixed":
                 raw_stats[metric] = self.correlation_difference()
-            elif metric == "rand_thrs_query":  
+            elif metric == "rand_thresholding_query":  
                 raw_stats[metric] = self.random_thresholding()
-            elif metric == "rand_coun_new":  
+            elif metric == "rand_counting_query":  
                 raw_stats[metric] = self.random_counting_queries()  
              
             elif "Way" in metric:

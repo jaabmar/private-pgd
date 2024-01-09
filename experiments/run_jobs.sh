@@ -54,6 +54,17 @@ table1() {
 
     hyperparams[inference_type]="privpgd"
     hyperparams[mechanism]="KWay"
+    hyperparams[p_mask]="20"
+
+
+    hyperparams[scheduler_step]="50"
+    hyperparams[scheduler_gamma]="0.75"
+
+
+    hyperparams[scheduler_step_proj]="200"
+    hyperparams[iters_proj]="2000"
+    hyperparams[scheduler_gamma_proj]="0.75"
+    hyperparams[num_projections_proj]="20"
     hyperparams[degree]="2"
     hyperparams[lr]="0.1"
     hyperparams[iters]="1000"
@@ -97,6 +108,7 @@ table3() {
 
 
 
+
 table4() {
     PROJECT_NAME="experiment_table_marginals"
     prefixes=("*")
@@ -113,7 +125,30 @@ table4() {
 
 }
 
+hyperparams() {
+    suffixes=("_32")
+    hyperparams[run_number]="1 2"
+    PROJECT_NAME="hyperparams2"
+    prefixes=("*")
 
+    hyperparams[inference_type]="privpgd"
+    hyperparams[mechanism]="KWay"
+    hyperparams[degree]="2"
+    hyperparams[lr]="0.1"
+    hyperparams[iters]="1000"
+    hyperparams[p_mask]="20"
+    hyperparams[scheduler_step]="50"
+    hyperparams[scheduler_gamma]="0.75"
+    hyperparams[epsilon]="2.5"
+
+
+    hyperparams[scheduler_step_proj]="200"
+    hyperparams[iters_proj]="2000"
+    hyperparams[scheduler_gamma_proj]="0.75"
+    hyperparams[num_projections_proj]="20 100"
+
+    SBATCH_ARGS=" --time=3:59:59 --tmp=1024 --gpus=1 --mem-per-cpu=10g --gres=gpumem:10g --account=$ACCOUNT_NAME"
+}
 
 
 
@@ -139,7 +174,8 @@ main() {
         table2 ;;
     "table3")
         table3 ;;
-
+    "hyperparams")
+        hyperparams ;;
     *)
         echo "Unknown experiment type: $experiment_type"
         exit 1

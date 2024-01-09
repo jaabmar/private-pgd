@@ -18,11 +18,14 @@ from experiments.post_processing.evaluators import DatasetEvaluator
 
 
 def process_dataset(api,dataset, run_set, project_name, main_path, data_path, metrics_to_evaluate=[]):
-    ref_path = os.path.join(data_path, dataset)
-    print(ref_path)
+    data_path = os.path.join(data_path, dataset)
+    train_data_path = os.path.join(main_path, "data", dataset)
+
+    print(data_path)
+    print(f"Start with the data set {dataset}")
     print(f"Start with the data set {dataset}")
     try:
-        train_data = Dataset.load(os.path.join(ref_path, "data_disc.csv"),os.path.join(ref_path, "domain.json")) 
+        train_data = Dataset.load(os.path.join(train_data_path, "data_disc.csv"),os.path.join(train_data_path, "domain.json")) 
     except Exception as e:
         print(f"Fail for data {dataset}")
         return
@@ -31,21 +34,15 @@ def process_dataset(api,dataset, run_set, project_name, main_path, data_path, me
         run = api.run(f"{project_name}/{run_id}")
 
         try:
-            synth_data = Dataset.load(os.path.join(ref_path, f"synth_data{run_id}.csv"),os.path.join(ref_path, "domain.json")) 
+            synth_data = Dataset.load(os.path.join(data_path, f"synth_{run_id}.csv"),os.path.join(train_data_path, "domain.json")) 
 
 
         except Exception as e:
             print(f"Error reading synthesized data for run_id {run_id}: {e}")
             continue
 
-        
-        # check if the key is a substring of an already eavluated key in run.summary
-
-
 
         already_evaluated_metrics = [metric for metric in metrics_to_evaluate if any(metric in key for key in run.summary.keys())]
-
-
         metrics_to_evaluate_now = list(set(metrics_to_evaluate) - set(already_evaluated_metrics))
 
         if metrics_to_evaluate_now:
@@ -56,9 +53,7 @@ def process_dataset(api,dataset, run_set, project_name, main_path, data_path, me
             for key, value in metrics.items():
                 run.summary[key] = value
             run.update()
-            print("done with updating the run")
-        else:
-            print("nothing to update")  
+        print("done with updating the run")
 
     print(f"Done with the data set {dataset}")
 
@@ -75,7 +70,7 @@ def get_args():
     parser.add_argument("--filters_adv", type=str, default="./experiments/post_processing/filters_adv.json", help="Name of the project")
     parser.add_argument("--filters_relational", type=str, default="./experiments/post_processing/relational_filters.json", help="Name of the project")
     parser.add_argument("--metrics", nargs='+', default = [], help="Metrics to evaluate")
-   
+
     args = parser.parse_args()
     return args
 
@@ -89,7 +84,10 @@ if __name__ == "__main__":
 
     paths = get_paths()
     main_path = paths['main_path']
-    data_path = paths['data_path']
+    if project_name == "private_gsd":
+        data_path = os.path.join(paths['bench_path'], "results_gsd")
+    else:
+        data_path = os.path.join(paths['bench_path'], f"results_{project_name}")
 
     entity_name = paths['entity_name']
 
@@ -112,9 +110,6 @@ if __name__ == "__main__":
     def process_dataset_setup(dataset):
         return process_dataset(api, dataset, dataset_runs[dataset], project_name, main_path,data_path, args.metrics)
 
-
-    # with ProcessPoolExecutor() as executor:
-    #     results = list(executor.map(process_dataset_setup, dataset_runs.keys()))
 
     results = []
     for key in dataset_runs.keys():

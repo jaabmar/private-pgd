@@ -67,9 +67,32 @@ def get_paths():
     if main_path is None:
         raise ValueError("Environment variable BASE_PATH not set.")
 
+    bench_path = os.environ.get("BENCHMARK_DIR", None)
+    if bench_path is None:
+        raise ValueError("Environment variable BENCH_PATH not set.")
+
+
+    data_path = os.path.join(main_path, "data")
+
     # Get the entity name
     entity_name = os.environ.get("WANDB_ENTITY_NAME", None)
     if entity_name is None:
         raise ValueError("Environment variable WANDB_ENTITY not set.")
 
-    return {"main_path": main_path, "entity_name": entity_name}
+    return {"data_path": data_path, "main_path":main_path, "bench_path": bench_path,  "entity_name": entity_name}
+
+
+
+
+def add_stat(filtered_data, statistics, run, dataset_name, name_run, map_statistics):
+    for stat in statistics:
+        for key_run in run.summary.keys():
+            if stat in key_run:
+                if key_run not in filtered_data[dataset_name][name_run]:
+                    filtered_data[dataset_name][name_run][key_run] = []
+                if stat in map_statistics.keys():
+                    filtered_data[dataset_name][name_run][key_run].append(run.summary[key_run]/run.summary[map_statistics[stat]])
+                elif key_run == "elapsed_time":
+                    filtered_data[dataset_name][name_run][key_run].append(run.summary[key_run]/60)
+                else:
+                    filtered_data[dataset_name][name_run][key_run].append(run.summary[key_run])

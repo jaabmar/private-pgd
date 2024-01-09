@@ -11,7 +11,6 @@ import json
 
 import os
 import numpy as np
-import matplotlib.pyplot as plt
 from collections import defaultdict
 
 import numpy as np
@@ -31,14 +30,11 @@ script_folder = os.path.dirname(script_file)  # Extracts the folder (directory) 
 k = 32
 name = "full"
 
-#epsilons = [0.2, 1.0, 2.5]
 epsilons = [0.2, 1.0 , 2.5]
 print("HI")
-methods_base = ["advanced_extended+KWay" ]
+methods_base = ["privpgd+KWay" ]
 
-methods = ["advanced_basic+KWay"]
-
-#methods = ["pgm_euclid+AIM", "pgm_euclid+MST", "private_gsd+KWay", "gem+KWay", "rap+KWay"]
+methods = ["pgm_euclid+AIM", "pgm_euclid+MST", "private_gsd+KWay", "gem+KWay", "rap+KWay"]
 
 with open(os.path.join(script_folder, f"save_stats"), "rb") as file:
     filtered_data = pickle.load(file)
@@ -66,23 +62,15 @@ def custom_sort_key(key):
 
 plot_stats = ["wdist_2_workload_Extended_45_avg", "synth_gradboost_test", "cov_diff_spectral_norm", "rand_coun_query_mean_dist", "rand_thrs_query_mean_dist"]
 
+
 statistics = {
-            "rand_thrs_query_mean_dist": "thresholding queries",
+            "rand_thresholding_query_mean_dist": "thresholding queries",
             "synth_gradboost_test": "class/reg test error",
-            "rand_coun_new_mean_dist": "counting queries",
+            "rand_counting_query_mean_dist": "counting queries",
                         "cov_fixed_frobenius_norm": "covariance matrix", 
                     "wdist_1_2Way_avg": "$SW_1$ distance" , 
-                        "wdist_2_2Way_avg": "$SW_1$ distance" , 
                     "newl1_2Way_avg" : "TV distance",
-                    "newl1_3Way_avg" : "TV distance 3Way",
-                    "newl1_2Way_max" : "TV distance",
-                    "newl1_3Way_max" : "TV distance 3Way",
-                    "wdist_1_3Way_avg": "$SW_1$ distance 3Way" , 
-                    "wdist_1_3Way_max": "$SW_1$ distance 3Way" , 
-                    "wdist_1_2Way_max": "$SW_1$ distance 3Way" , 
-                    "wdist_2_3Way_max": "$SW_1$ distance 3Way" , 
-                    "wdist_2_2Way_max": "$SW_1$ distance 3Way" , 
-                    "w_mean": "$SW_1$ distance 3Way" , 
+
             }
 
 

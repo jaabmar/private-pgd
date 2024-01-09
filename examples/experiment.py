@@ -149,6 +149,12 @@ def initialize_mechanism_and_inference(hp: Dict[str, Any]) -> Tuple[Any, Any]:
     help="Number of iterations for PrivPGD particle gradient descent or PGM mirror descent.",
 )
 @click.option(
+    "--iters_proj",
+    default=1750,
+    type=int,
+    help="Number of iterations for PrivPGD particle gradient descent or PGM mirror descent.",
+)
+@click.option(
     "--n_particles",
     default=100000,
     type=int,
@@ -193,8 +199,26 @@ def initialize_mechanism_and_inference(hp: Dict[str, Any]) -> Tuple[Any, Any]:
     help="Scheduler gamma (i.e., multiplicative factor) for PrivPGD.",
 )
 @click.option(
+    "--scheduler_step_proj",
+    default=100,
+    type=float,
+    help="Scheduler step size for PrivPGD.",
+)
+@click.option(
+    "--scheduler_gamma_proj",
+    default=0.8,
+    type=float,
+    help="Scheduler gamma (i.e., multiplicative factor) for PrivPGD.",
+)
+@click.option(
     "--num_projections",
     default=10,
+    type=int,
+    help="Number of projections to compute SW2 for PrivPGD.",
+)
+@click.option(
+    "--num_projections_proj",
+    default=200,
     type=int,
     help="Number of projections to compute SW2 for PrivPGD.",
 )

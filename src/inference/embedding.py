@@ -340,7 +340,7 @@ class Embedding:
             n,
             sum([len(self.bijection[attr]) for attr in attrs]),
             dtype=torch.float32,
-        )
+        ).to(self.device)
         location = 0
         for _, attr in enumerate(attrs):
             new_location = len(self.bijection[attr]) + location
