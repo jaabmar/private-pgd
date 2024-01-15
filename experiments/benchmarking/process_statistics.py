@@ -32,7 +32,8 @@ runs = get_filtered_runs(api, project_name, entity_name)
 
 
 
-otheralgos =["gem", "private_gsd", "rap"]
+# otheralgos =["gem", "private_gsd", "rap"]
+otheralgos =[ "private_gsd"]
 
 
 
@@ -66,10 +67,16 @@ for run in runs:
     mechanism = config.get('mechanism')
     if not(dataset_name and epsilon and inference_type):
         continue
+    p_mask = config.get('p_mask', 0)
+
+    if inference_type =="privpgd":
+        if p_mask != 80:
+            continue
 
     name_run = f"{epsilon}+{inference_type}+{mechanism}"
     if name_run not in filtered_data[dataset_name]:
         filtered_data[dataset_name][name_run] = {}
+
     add_stat(filtered_data, statistics, run, dataset_name, name_run, map_statistics)
 
 
@@ -79,7 +86,7 @@ for otheralg in otheralgos:
     for run in runs_2:
         config = run.config
         summary = run.summary
-        if not  str(summary.get('hp_best_12_12')) == "True":
+        if not  str(summary.get('hp_best_15_01')) == "True":
             continue
 
         dataset_name = config.get('dataset_name')

@@ -80,6 +80,8 @@ class AdvancedSlicedInference:
         self.total = None
         self.history = []
         self.history_particles = []
+        self.measurements_processed = []
+
 
     def estimate(
         self,
@@ -229,6 +231,7 @@ class AdvancedSlicedInference:
         measurements: List[
             Tuple[sparse.spmatrix, np.ndarray, float, Tuple[str, ...]]
         ],
+        reuse:bool=False
     ) -> List[Tuple[torch.Tensor, float, Tuple[str, ...]]]:
         """
         Projection step. This method transforms the finite signed measures into probability measures by minimizing sliced
@@ -240,8 +243,13 @@ class AdvancedSlicedInference:
         Returns:
             List[Tuple[torch.Tensor, float, Tuple[str, ...]]]: preprocessed measurements
         """
-        measurements_processed = []
+        if not reuse:
+            self.measurements_processed = []
+        already_measured = [m[3] for m in self.measurements_processed]
+
         for _, y, noise, proj in measurements:
+            if proj in already_measured:
+                continue
             ynorm = y / self.total
             if self.adjust_for_compression[proj] is not None:
                 ynorm = ynorm[self.adjust_for_compression[proj].cpu().numpy()]
@@ -269,8 +277,8 @@ class AdvancedSlicedInference:
                 )
                 self.yprobs[proj] = yprobnorm
             m = (yprobnorm, noise, proj)
-            measurements_processed.append(m)
-        return measurements_processed
+            self.measurements_processed.append(m)
+        return self.measurements_processed
 
     def optimize_u(
         self,
