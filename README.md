@@ -1,12 +1,11 @@
 # PrivPGD: Particle Gradient Descent and Optimal Transport for Private Tabular Data Synthesis
 
-[![arXiv](https://img.shields.io/badge/stat.ML-arXiv%3A2006.08437-B31B1B.svg)](https://arxiv.org/abs/2312.03871)
 [![Python 3.11.5](https://img.shields.io/badge/python-3.11.5-blue.svg)](https://python.org/downloads/release/python-3115/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Pytorch 2.1.2](https://img.shields.io/badge/pytorch-2.1.2-green.svg)](https://pytorch.org/)
 
 
-This repository contains the Python implementation of **PrivPGD**, a generation method for marginal-based private data synthesis introduced in the paper [Privacy-preserving data release leveraging optimal transport and particle gradient descent](https://arxiv.org/abs/2312.03871).
+This repository contains the Python implementation of **PrivPGD**, a generation method for marginal-based private data synthesis introduced in the paper Privacy-preserving data release leveraging optimal transport and particle gradient descent.
 
 * [Overview](#overview)
 * [Contents](#contents)
@@ -80,21 +79,15 @@ conda activate privpgd
 ```
 #### Install the Package
 
-There are two ways to install the package:
+**Local Installation:**
 
-1. **Local Installation:**
-   Start by cloning the repository from GitHub. Then, upgrade `pip` to its latest version and use the local setup files to install the package. This method is ideal for development or when you have the source code.
-   ```bash
-   git clone https://github.com/jaabmar/private-pgd.git
-   cd private-pgd
-   pip install --upgrade pip
-   pip install -e .
-   ```
-2. **Direct Installation from GitHub (Recommended):**
-   You can also install the package directly from GitHub. This method is straightforward and ensures you have the latest version.
-   ```bash
-   pip install git+https://github.com/jaabmar/private-pgd.git
-   ```
+Upgrade `pip` to its latest version and use the local setup files to install the package. This method is ideal for development or when you have the source code.
+```bash
+cd private-pgd
+pip install --upgrade pip
+pip install -e .
+```
+```
 ## Examples and Tutorial
 
 In the `examples` folder, you'll find practical examples showcasing how to use the package effectively. These examples are designed to help you understand the application of different mechanisms and methods included in the package.
@@ -145,48 +138,3 @@ This command will initiate the experiment with PrivPGD using the specified datas
 ### Step-by-Step Tutorial
 
 For a detailed, step-by-step understanding of how PrivPGD works, refer to the `Tutorial.ipynb` notebook in the `examples` folder. This Jupyter notebook includes comprehensive explanations and visualizations, walking you through the entire process of using PrivPGD for differentially private data synthesis. 
-
-## Contributing
-
-We welcome contributions to improve this project. Here's how you can contribute:
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-
-## Contact
-
-For any inquiries, please reach out:
-
-- Javier Abad Martinez - [javier.abadmartinez@ai.ethz.ch](mailto:javier.abadmartinez@ai.ethz.ch)
-- Konstantin Donhauser - [konstantin.donhauser@ai.ethz.ch](mailto:konstantin.donhauser@ai.ethz.ch)
-- Neha Hulkund - [nhulkund@mit.edu](mailto:nhulkund@mit.edu)
-
-## Citation
-
-If you find this code useful, please consider citing our paper:
- ```
-@article{donhauser2023leveraging,
-  title={Privacy-preserving data release leveraging optimal transport and particle gradient descent},
-  author={Konstantin Donhauser and Javier Abad and Neha Hulkund and Fanny Yang},
-  year={2023},
-  journal={arXiv preprint arXiv:2312.03871},
-  eprint={2312.03871},
-  archivePrefix={arXiv},
-  primaryClass={stat.ML}
-}
-```
-
-## Work in Progress
-
-We are actively developing new features and improvements for our framework:
-
-- **Evaluation Pipeline**: Incorporating other evaluation metrics, like differences in the covariance matrix and other higher-order queries, and assessing performance in downstream tasks.
-- **Benchmark with Additional Algorithms**: Integration of algorithms like Private GSD, RAP, and GEM is underway, to provide a broader benchmark comparison. 
-
-These updates are part of our continuous effort to refine our framework and provide a robust benchmark in the field of differentially private data synthesis.
-
-*Note: The features and integrations mentioned are in active development and will be part of future releases.*
