@@ -87,7 +87,7 @@ cd private-pgd
 pip install --upgrade pip
 pip install -e .
 ```
-```
+
 ## Examples and Tutorial
 
 In the `examples` folder, you'll find practical examples showcasing how to use the package effectively. These examples are designed to help you understand the application of different mechanisms and methods included in the package.
