@@ -6,6 +6,7 @@ import pandas as pd
 
 from inference.domain import Domain
 
+
 class Dataset:
     def __init__(
         self,
