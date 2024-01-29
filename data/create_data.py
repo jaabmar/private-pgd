@@ -34,7 +34,7 @@ def create_all_ACS_data(disc_k=35, year="2018"):
         "traveltime": ACSTravelTime,
     }
     data_source = ACSDataSource(
-        survey_year=year, horizon="1-Year", survey="person"
+        survey_year=year, horizon="5-Year", survey="person"
     )
     acs_data = data_source.get_data(states=[state], download=True)
     for task, datatask in data_tasks.items():
