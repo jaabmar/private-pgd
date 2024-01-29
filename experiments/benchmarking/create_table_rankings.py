@@ -18,10 +18,10 @@ import numpy as np
 
 
 
-statistics = {           
+statistics = {            "rand_counting_query_mean_dist": "counting queries",
+
                 "synth_gradboost_test": "class/reg test error",
                 "cov_fixed_frobenius_norm": "covariance matrix", 
-                             "rand_counting_query_mean_dist": "counting queries",
             "rand_thresholding_query_mean_dist": "thresholding queries",
                     "wdist_1_2Way_avg": "$SW_1$ distance" , 
                     "newl1_2Way_avg" : "TV distance",
@@ -52,7 +52,8 @@ for epsilon in epsilons:
             yratio = []
             xvalues = []
             for dataset in filtered_data.keys():
-
+                if "ans" in dataset:
+                    continue
                 if epsilon >2.5:
                     epsilon = int(epsilon)
 

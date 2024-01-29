@@ -27,13 +27,11 @@ import pickle
 
 def process_dataset(api,set_runs, dataset, entity_name, project_name, models_to_evaluate=[] ):
     ref_path = os.path.join(data_path, dataset)
-    train_data_path = os.path.join(main_path, "data", dataset)
-
     print(f"Start with the data set {dataset}")
     
     try:
-        train_data = pd.read_csv(os.path.join(train_data_path, "data_disc.csv"))
-        test_data = pd.read_csv(os.path.join(train_data_path, "testdata_disc.csv"))
+        train_data = pd.read_csv(os.path.join(ref_path, "data_disc.csv"))
+        test_data = pd.read_csv(os.path.join(ref_path, "testdata_disc.csv"))
         train_data.columns = train_data.columns.astype(str)
         test_data.columns = test_data.columns.astype(str)
     except Exception as e:
@@ -50,7 +48,7 @@ def process_dataset(api,set_runs, dataset, entity_name, project_name, models_to_
         run = api.run(f"{project_name}/{run_id}")
 
         try:
-            train_data_synth = pd.read_csv(os.path.join(ref_path, f"synth_{run_id}.csv"))
+            train_data_synth = pd.read_csv(os.path.join(ref_path, f"synth_data{run_id}.csv"))
             train_data_synth.columns = train_data_synth.columns.astype(str)
             stop = False
         except Exception as e:
@@ -216,17 +214,9 @@ if __name__ == "__main__":
     print(f"Project Name: {project_name}")
     
 
-
     paths = get_paths()
-    main_path = paths['main_path']
-    if project_name == "private_gsd":
-        data_path = os.path.join(paths['bench_path'], "results_gsd")
-    else:
-        data_path = os.path.join(paths['bench_path'], f"results_{project_name}")
-
+    data_path = paths['data_path']
     entity_name = paths['entity_name']
-
-
     with open(args.filters_adv, 'r') as file:
         filters_adv = json.load(file)
     with open(args.filters_relational, 'r') as file:

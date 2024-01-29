@@ -27,15 +27,16 @@ k = 32
 
 epsilons = [0.2, 1.0 , 2.5]
 
+methods_base = []
 
-methods = {"privpgd+KWay" :"PrivPGD" , "pgm_euclid+AIM" :"PGM+AIM", "pgm_euclid+MST":"PGM+MST", "private_gsd+KWay":"Private GSD", "gem+KWay":"GEM", "rap+KWay":"RAP"} 
+methods = {"advanced_extended+KWay" :"PrivPGD" , "pgm_euclid+AIM" :"PGM+AIM", "pgm_euclid+MST":"PGM+MST", "private_gsd+KWay":"Private GSD", "gem+KWay":"GEM", "rap+KWay":"RAP", "localPGM+KWay":"AP-PGM"} 
 def custom_sort_key(key):
     epsilon, name = key.split('+')
     epsilon = float(epsilon)
     
     # Assign a weight to the names based on your desired order
     name_weight = {
-        "privpgd": 1,
+        "advanced_extended": 1,
         "private_gsd":3,
         "pgm_euclid": 2,
         "gem":4, 
@@ -50,32 +51,32 @@ def custom_sort_key(key):
     return (epsilon, weight)
 
 
-inference_types = {"pgm_euclid":"PGM", "privpgd":"PrivPGD", "private_gsd": "Private GSD", "gem":"GEM", "rap":"RAP", "localPGM":"AP-PGM"}
-
-
+inference_types = {"pgm_euclid":"PGM", "advanced_extended":"PrivPGD", "private_gsd": "Private GSD", "gem":"GEM", "rap":"RAP", "localPGM":"AP-PGM"}
 
 statistics = {
-                                "synth_gradboost_test": "down.",
-            "cov_fixed_frobenius_norm": "cov.",
-            "rand_thresholding_query_mean_dist": "thrs.",
-            "rand_counting_query_mean_dist": "count.",
-                    "wdist_1_2Way_avg": "$\swd_1$ d." , 
-                    "newl1_2Way_avg" : "TV d.",
-
+            "wdist_1_2Way_avg": "$SW_1$ distance" , 
+                "newl1_2Way_avg" : "TV distance",
             }
 
 
 maps_dataset={
-    "ans_employment_CA_2018":"Emp. ", 
-    "ans_income_CA_2018": "Inc. ", 
-        "ans_traveltime_CA_2018": "Tra. ", 
-    "ans_publiccoverage_CA_2018":"Pub. ", 
-    "ans_mobility_CA_2018": "Mob. ", 
-        "nyc-taxi-green-dec-2016_regression":"Taxi " , 
-        "black_friday_regression":"Fri. ",
-    "medical_charges_regression": "Med. ",
-     "Diabetes130US":"Diab. " 
-    }
+    "Diabetes130US":"Diabetes",
+    "Higgs":"Higgs",
+    "SGEMM_GPU_kernel_performance_regression":"SGEMM GPU", 
+    "ans_employment_CA_2018":"ACS Employment", 
+    "ans_income_CA_2018": "ACS Income", 
+    "ans_mobility_CA_2018": "ACS Mobility", 
+    "ans_publiccoverage_CA_2018":"ACS Public Coverage", 
+    "ans_traveltime_CA_2018": "ACS Traveltime", 
+    "black_friday_regression":"Black Firday", 
+    "covertype":"Covertype", 
+    "diamonds_regression":"Diamonds", 
+    "electricity": "Electricity", 
+    "medical_charges_regression": "Medical Charges", 
+    "nyc-taxi-green-dec-2016_regression":"NYC Taxi", 
+    "particulate-matter-ukair-2017_regression" : "Particulate Matter Ukair", 
+}
+
 
 
 # def process_data(entry, column):
@@ -135,9 +136,7 @@ for epsilon in epsilons:
                         std_dev = np.std(tmp)
 
                         # Formatting the output
-                        #data_temp[key_run] = "{:.2g} (±{:.2g})".format(mean, std_dev)
-                        data_temp[key_run] = "{:.2g}".format(mean)
-
+                        data_temp[key_run] = "{:.2g} (±{:.2g})".format(mean, std_dev)
 
                     else:
                         data_temp[key_run] = "-"
@@ -190,9 +189,8 @@ for epsilon in epsilons:
             pass
         return value
 
-
     # Step 2: Generate LaTeX table
-    header = ["dataset", "inference"] + list(statistics.values())
+    header = ["dataset", "inference"] + list(statistics.keys())
     keys_inf = {value: j for (j, value) in enumerate(methods.values())}
     maps_keys = {value: j for (j, value) in enumerate(maps_dataset.values())}
 
@@ -224,7 +222,8 @@ for epsilon in epsilons:
         else:
             latex_table += " & "
 
-        latex_table += row["inference"]+ "&" + " & ".join( process_data(row[stat], stat, row['dataset']) for stat in statistics.keys()) + " \\\\\n"
+        latex_table += " & ".join(process_data(row[stat], stat, row['dataset']) for stat in statistics.keys()) + " \\\\\n"
+
         if i == len(sorted_temp) - 1:
             latex_table = latex_table.replace(f"{{placeholder_{current_dataset}}}", f"\\multirow{{{row_span_count}}}{{*}}{{{current_dataset}}}")
 

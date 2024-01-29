@@ -5,7 +5,7 @@
 source experiments/run_setup.sh
 # Define the directory containing your folders
 # Folder keywords
-declare -a prefixes=("*ans*" "*medical*" "*nyc*" "*Diabetes*"  "*black_friday*")
+declare -a prefixes=("*ans*" "*Higgs*" "*nyc*" "*covertype*" "*Diabetes*"  "*black_friday*" "*particulate*")
 
 
 declare -a disc_types=("default") 
@@ -50,7 +50,8 @@ table1() {
     suffixes=("_32")
 
     PROJECT_NAME="benchmark_table"
-    prefixes=("*ans*" "*medical*" "*nyc*" "*Diabetes*"  "*black_friday*")
+    prefixes=("*")
+
     hyperparams[inference_type]="privpgd"
     hyperparams[mechanism]="KWay"
     hyperparams[p_mask]="20"
@@ -67,7 +68,6 @@ table1() {
     hyperparams[degree]="2"
     hyperparams[lr]="0.1"
     hyperparams[iters]="1000"
-    hyperparams[n_particles]="500000"
 
     SBATCH_ARGS=" --time=3:59:59 --tmp=1024 --gpus=1 --mem-per-cpu=10g --gres=gpumem:10g --account=$ACCOUNT_NAME"
 }

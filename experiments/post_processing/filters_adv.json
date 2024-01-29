@@ -1,13 +1,1 @@
-{
-    "dataset_name": [
-        "Diabetes130US",
-        "ans_employment_CA_2018",
-        "ans_income_CA_2018",
-        "ans_mobility_CA_2018",
-        "ans_publiccoverage_CA_2018",
-        "ans_traveltime_CA_2018",
-        "black_friday_regression",
-        "medical_charges_regression",
-        "nyc-taxi-green-dec-2016_regression"
-    ]
-}
+{}
