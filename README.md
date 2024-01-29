@@ -17,15 +17,15 @@ This repository contains the Python implementation of **PrivPGD**, a generation 
 
 ## Overview
 
-The distribution of sensitive datasets plays a key role in data-driven decision-making across many fields, including healthcare and government. Nevertheless, the release of such datasets often leads to significant privacy concerns. Differential Privacy (DP) has emerged as an effective solution to address these concerns, ensuring privacy preservation in our increasingly data-centric world.
+The distribution of sensitive datasets plays a key role in data-driven decision-making across many fields, including healthcare and government. Nevertheless, the release of such datasets often leads to significant privacy concerns. Differential Privacy (DP) has emerged as an effective paradigm to address these concerns, ensuring privacy preservation in our increasingly data-centric world.
 
-PrivPGD is a novel approach for differentially private tabular data synthesis. It creates high-quality, privacy-preserving copies of protected tabular datasets from noisy measurements of their marginals. PrivPGD leverages particle gradient descent coupled with an optimal transport-based divergence, which facilitates the efficient integration of marginal information during the dataset generation process.
+PrivPGD is a novel approach for differentially private tabular data synthesis. It creates high-quality, private copies of protected tabular datasets from noisy measurements of their marginals. PrivPGD leverages particle gradient descent coupled with an optimal transport-based divergence, which facilitates the efficient integration of marginal information during the dataset generation process.
 
 Key advantages of PrivPGD include:
 
-- State-of-the-Art Performance: Demonstrates superior performance in benchmarks and downstream tasks, especially with large datasets.
+- State-of-the-Art Performance: Demonstrates superior performance in benchmarks and downstream tasks.
 - Scalability: Features an optimized gradient computation suitable for parallelization on modern GPUs, making it particularly fast at handling large datasets and many marginals.
-- Geometry Preservation: Retains the geometry of dataset features, suck as rankings, aligning more naturally with the nuances of real-world data.
+- Geometry Preservation: Retains the geometry of dataset features, such as rankings, aligning more naturally with the nuances of real-world data.
 - Domain-Specific Constraints Incorporation: Enables the inclusion of additional constraints in the synthetic data.
 
 ## Contents
