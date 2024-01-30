@@ -11,9 +11,6 @@ This repository contains the Python implementation of **PrivPGD**, a generation 
 * [Contents](#contents)
 * [Getting Started](#getting-started)
 * [Examples and Tutorial](#examples-and-tutorial)
-* [Contributing](#contributing)
-* [Contact](#contact)
-* [Citation](#citation)
 
 ## Overview
 
