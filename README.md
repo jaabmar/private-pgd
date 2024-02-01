@@ -1,12 +1,12 @@
 # PrivPGD: Particle Gradient Descent and Optimal Transport for Private Tabular Data Synthesis
 
-[![arXiv](https://img.shields.io/badge/stat.ML-arXiv%3A2006.08437-B31B1B.svg)](https://arxiv.org/abs/2312.03871)
+[![arXiv](https://img.shields.io/badge/stat.ML-arXiv%3A2006.08437-B31B1B.svg)](https://arxiv.org/abs/2401.17823)
 [![Python 3.11.5](https://img.shields.io/badge/python-3.11.5-blue.svg)](https://python.org/downloads/release/python-3115/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Pytorch 2.1.2](https://img.shields.io/badge/pytorch-2.1.2-green.svg)](https://pytorch.org/)
 
 
-This repository contains the Python implementation of **PrivPGD**, a generation method for marginal-based private data synthesis introduced in the paper [Privacy-preserving data release leveraging optimal transport and particle gradient descent](https://arxiv.org/abs/2312.03871).
+This repository contains the Python implementation of **PrivPGD**, a generation method for marginal-based private data synthesis introduced in the paper [Privacy-preserving data release leveraging optimal transport and particle gradient descent](https://arxiv.org/abs/2401.17823).
 
 * [Overview](#overview)
 * [Contents](#contents)
@@ -173,13 +173,12 @@ If you find this code useful, please consider citing our paper:
   title={Privacy-preserving data release leveraging optimal transport and particle gradient descent},
   author={Konstantin Donhauser and Javier Abad and Neha Hulkund and Fanny Yang},
   year={2023},
-  journal={arXiv preprint arXiv:2312.03871},
-  eprint={2312.03871},
+  journal={arXiv preprint arXiv:2401.17823},
+  eprint={2401.17823},
   archivePrefix={arXiv},
   primaryClass={stat.ML}
 }
 ```
-
 ## Work in Progress
 
 We are actively developing new features and improvements for our framework:
