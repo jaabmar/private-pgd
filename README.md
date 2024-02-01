@@ -1,6 +1,6 @@
 # PrivPGD: Particle Gradient Descent and Optimal Transport for Private Tabular Data Synthesis
 
-[![arXiv](https://img.shields.io/badge/stat.ML-arXiv%3A2006.08437-B31B1B.svg)](https://arxiv.org/abs/2401.17823)
+[![arXiv](https://img.shields.io/badge/stat.ML-arXiv%3A2401.17823-B31B1B.svg)](https://arxiv.org/abs/2401.17823)
 [![Python 3.11.5](https://img.shields.io/badge/python-3.11.5-blue.svg)](https://python.org/downloads/release/python-3115/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Pytorch 2.1.2](https://img.shields.io/badge/pytorch-2.1.2-green.svg)](https://pytorch.org/)
