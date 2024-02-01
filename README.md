@@ -176,7 +176,7 @@ If you find this code useful, please consider citing our paper:
   journal={arXiv preprint arXiv:2401.17823},
   eprint={2401.17823},
   archivePrefix={arXiv},
-  primaryClass={stat.ML}
+  primaryClass={cs.LG}
 }
 ```
 ## Work in Progress
