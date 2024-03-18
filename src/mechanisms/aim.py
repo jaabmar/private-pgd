@@ -71,7 +71,7 @@ class AIM(Mechanism):
             bias = np.sqrt(2 / np.pi) * sigma * est.domain.size(cl)
             xest = est.project(cl).datavector()
             errors[cl] = wgt * (np.linalg.norm(x - xest, 1) - bias)
-            sensitivity[cl] = abs(wgt)
+            sensitivity[cl] = abs(wgt) * self.sensitivity
         max_sensitivity = max(sensitivity.values())
         keys = list(errors.keys())
         errors = np.array([errors[key] for key in keys])
