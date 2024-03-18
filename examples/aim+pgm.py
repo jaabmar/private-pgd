@@ -98,7 +98,7 @@ def run_aim_pgm(
         bounded=True,
     )
 
-    workload = generate_all_kway_workload(data=data, degree=2, num_marginals=5)
+    workload = generate_all_kway_workload(data=data, degree=2)
 
     start_time = time.time()
     synth, loss = mechanism.run(
@@ -109,7 +109,7 @@ def run_aim_pgm(
     print(f"Total loss: {loss}, Elapsed time: {end_time-start_time}")
     if params["savedir"]:
         synth.df.to_csv(
-            os.path.join(params["savedir"], "aim_pgm_synth_data.csv"),
+            os.path.join(params["savedir"], "aim_synth_data.csv"),
             index=False,
         )
 
@@ -139,7 +139,7 @@ def run_aim_pgm(
     }
 
     # File to save results
-    results_file = os.path.join(savedir, "aim_pgm_results.csv")
+    results_file = os.path.join(savedir, "aim_results.csv")
     file_exists = os.path.isfile(results_file)
 
     with open(results_file, "a", newline="") as csvfile:
