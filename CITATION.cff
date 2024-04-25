@@ -10,9 +10,6 @@ authors:
   - family-names: Yang
     given-names: Fanny
 title: "Privacy-preserving data release leveraging optimal transport and particle gradient descent"
-version: 1.0
-doi: 10.1234/zenodo.1234
-date-released: 2024-01-01
 journal: "arXiv preprint arXiv:2401.17823"
 url: "https://arxiv.org/abs/2401.17823"
 preferred-citation:
