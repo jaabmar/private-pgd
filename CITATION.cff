@@ -1,12 +1,18 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite it as below."
+message: "If you use this software, please cite as follows:"
+type: article
+title: "Privacy-preserving data release leveraging optimal transport and particle gradient descent"
 authors:
-- family-names: "Abad"
-  given-names: "Javier"
-- family-names: "Donhauser"
-  given-names: "Konstantin"
-title: "private-pgd"
-version: 1.0.0
-doi: 10.48550/arXiv.2401.17823
-date-released: 2024-04-25
-url: "https://github.com/jaabmar/private-pgd"
+  - family-names: Donhauser
+    given-names: Konstantin
+  - family-names: Abad
+    given-names: Javier
+  - family-names: Hulkund
+    given-names: Neha
+  - family-names: Yang
+    given-names: Fanny
+year: 2024
+journal: "arXiv preprint arXiv:2401.17823"
+identifiers:
+  - type: arXiv
+    value: 2401.17823
