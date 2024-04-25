@@ -12,7 +12,4 @@ authors:
     given-names: Fanny
 year: 2024
 journal: "arXiv preprint arXiv:2401.17823"
-identifiers:
-  - type: arXiv
-    value: "2401.17823"
 type: article
