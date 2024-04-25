@@ -1,6 +1,5 @@
 cff-version: 1.2.0
-message: "If you use this code, please cite it as follows:"
-title: "Privacy-preserving data release leveraging optimal transport and particle gradient descent"
+message: "If you use this software, please cite it as below."
 authors:
   - family-names: Donhauser
     given-names: Konstantin
@@ -10,6 +9,24 @@ authors:
     given-names: Neha
   - family-names: Yang
     given-names: Fanny
-year: 2024
+title: "Privacy-preserving data release leveraging optimal transport and particle gradient descent"
+version: 1.0
+doi: 10.1234/zenodo.1234
+date-released: 2024-01-01
 journal: "arXiv preprint arXiv:2401.17823"
-type: article
+url: "https://arxiv.org/abs/2401.17823"
+preferred-citation:
+  type: article
+  authors:
+    - family-names: Donhauser
+      given-names: Konstantin
+    - family-names: Abad
+      given-names: Javier
+    - family-names: Hulkund
+      given-names: Neha
+    - family-names: Yang
+      given-names: Fanny
+  title: "Privacy-preserving data release leveraging optimal transport and particle gradient descent"
+  journal: "arXiv preprint arXiv:2401.17823"
+  year: 2024
+
