@@ -1,6 +1,5 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite as follows:"
-type: article
+message: "If you use this code, please cite it as follows:"
 title: "Privacy-preserving data release leveraging optimal transport and particle gradient descent"
 authors:
   - family-names: Donhauser
@@ -15,4 +14,5 @@ year: 2024
 journal: "arXiv preprint arXiv:2401.17823"
 identifiers:
   - type: arXiv
-    value: 2401.17823
+    value: "2401.17823"
+type: article
