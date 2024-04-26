@@ -20,18 +20,18 @@ This repository contains the Python implementation of **PrivPGD**, a generation 
 
 The distribution of sensitive datasets plays a key role in data-driven decision-making across many fields, including healthcare and government. Nevertheless, the release of such datasets often leads to significant privacy concerns. Differential Privacy (DP) has emerged as an effective paradigm to address these concerns, ensuring privacy preservation in our increasingly data-centric world.
 
-PrivPGD is a novel approach for differentially private tabular data synthesis. It creates high-quality, private copies of protected tabular datasets from noisy measurements of their marginals. PrivPGD leverages particle gradient descent coupled with an optimal transport-based divergence, which facilitates the efficient integration of marginal information during the dataset generation process.
+PrivPGD is a novel approach for differentially private tabular data synthesis. It creates high-quality, private copies of protected tabular datasets from noisy measurements of their marginals. PrivPGD leverages particle gradient descent coupled with an optimal transport-based divergence, facilitating the efficient integration of marginal information during the dataset generation process.
 
 Key advantages of PrivPGD include:
 
 - State-of-the-Art Performance: Demonstrates superior performance in benchmarks and downstream tasks.
 - Scalability: Features an optimized gradient computation suitable for parallelization on modern GPUs, making it particularly fast at handling large datasets and many marginals.
-- Geometry Preservation: Retains the geometry of dataset features, such as rankings, aligning more naturally with the nuances of real-world data.
+- Geometry Preservation: Preserves the geometry of dataset features, such as rankings, aligning more naturally with the nuances of real-world data.
 - Domain-Specific Constraints Incorporation: Enables the inclusion of additional constraints in the synthetic data.
 
 ## Contents
 
-The `src` folder contains the core code of the package, organized into several subfolders, each catering to specific functionalities. The codebase is heavily inspired by the [repository of PGM](https://github.com/ryan112358/private-pgm).
+The `src` folder contains the core code of the package, organized into several subfolders, each catering to specific functionalities. The codebase is heavily inspired by the [PGM repository](https://github.com/ryan112358/private-pgm).
 
 ### 1. Mechanisms (`src/mechanisms`):
    - Handles marginal selection and privatization.
@@ -97,7 +97,7 @@ There are two ways to install the package:
    ```
 ## Examples and Tutorial
 
-In the `examples` folder, you'll find practical examples showcasing how to use the package. These examples are designed to help you understand the application of different mechanisms and methods included in the package.
+In the `examples` folder, you'll find practical examples showcasing how to use the package. These examples are designed to help you understand how to apply the different mechanisms and methods included in the package.
 
 ### Preparing the Data
 
@@ -127,7 +127,7 @@ Before running the scripts, you need to download the ACS datasets:
 
 4. **`privpgd.py`**: This script is dedicated to running experiments with PrivPGD, our novel approach for differentially private data synthesis.
 
-5. **`privpgd_with_constraint.py`**: This script showcases how one can incorporate domain-specific constraints into PrivPGD.
+5. **`privpgd_with_constraint.py`**: This script shows how to incorporate domain-specific constraints into PrivPGD.
 
 ### Running Experiments
 
@@ -144,7 +144,7 @@ This command will initiate the experiment with PrivPGD using the specified datas
 
 ### Step-by-Step Tutorial
 
-For a detailed, step-by-step understanding of how PrivPGD works, refer to the `Tutorial.ipynb` notebook in the `examples` folder. This Jupyter notebook includes comprehensive explanations and visualizations, walking you through the entire process of using PrivPGD for differentially private data synthesis. 
+For a detailed, step-by-step understanding of PrivPGD, refer to the [Tutorial](examples/Tutorial.ipynb) Jupyter notebook. This notebook includes comprehensive explanations and visualizations, walking you through the entire process of using PrivPGD for differentially private data synthesis. 
 
 ## Contributing
 
@@ -187,5 +187,3 @@ We are actively developing new features and improvements for our framework:
 - **Benchmark with Additional Algorithms**: Integration of algorithms like Private GSD, RAP, and GEM is underway, to provide a broader benchmark comparison. 
 
 These updates are part of our continuous effort to refine our framework and provide a robust benchmark in the field of differentially private data synthesis.
-
-*Note: The features and integrations mentioned are in active development and will be part of future releases.*
