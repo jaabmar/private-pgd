@@ -169,14 +169,11 @@ For any inquiries, please reach out:
 
 If you find this code useful, please consider citing our paper:
  ```
-@article{donhauser2024privacypreserving,
-      title={Privacy-preserving data release leveraging optimal transport and particle gradient descent}, 
-      author={Konstantin Donhauser and Javier Abad and Neha Hulkund and Fanny Yang},
-      year={2024},
-      journal={arXiv preprint arXiv:2401.17823},
-      eprint={2401.17823},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG}
+@inproceedings{donhauserprivacy,
+  title={Privacy-Preserving Data Release Leveraging Optimal Transport and Particle Gradient Descent},
+  author={Donhauser, Konstantin and Abad, Javier and Hulkund, Neha and Yang, Fanny},
+  booktitle={Forty-first International Conference on Machine Learning},
+  year={2024},
 }
 ```
 ## Work in Progress
