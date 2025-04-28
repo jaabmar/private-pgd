@@ -6,7 +6,7 @@
 [![Pytorch 2.1.2](https://img.shields.io/badge/pytorch-2.1.2-green.svg)](https://pytorch.org/)
 
 
-This repository contains the Python implementation of **PrivPGD**, a generation method for marginal-based private data synthesis introduced in the paper [Privacy-preserving data release leveraging optimal transport and particle gradient descent](https://arxiv.org/abs/2401.17823).
+This repository contains the Python implementation of **PrivPGD**, a generation method for marginal-based private data synthesis introduced in the **ICML 2024 paper** [Privacy-preserving data release leveraging optimal transport and particle gradient descent](https://arxiv.org/abs/2401.17823).
 
 * [Overview](#overview)
 * [Contents](#contents)
